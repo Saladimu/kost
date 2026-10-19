@@ -222,3 +222,6 @@ Hentikan penggunaan sementara, periksa `AuditLog`, dan pulihkan dari backup Driv
 ### Trigger tidak berjalan
 
 Buka Triggers di editor Apps Script, pastikan `dailyJobs` ada. Jalankan `installTriggers()` secara manual bila trigger terhapus.
+
+
+Untuk hosting antarmuka di GitHub Pages dengan backend Apps Script, lihat `docs/GITHUB_PAGES.md`.

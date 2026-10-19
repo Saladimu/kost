@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Sistem Operasional Kos untuk mengelola kamar, penghuni, tagihan, pembayaran, dan laporan keuangan.">
   <title>Sistem Operasional Kos</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Cpath d='M16 46V22l16-8 16 8v24H16z' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M28 46V32h8v14' fill='none' stroke='%23fbbf24' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
 <body>
   <div id="boot-screen" class="boot-screen">
-    <div class="boot-mark">K</div>
+    <div class="boot-mark"><img src="assets/logo.png" alt=""></div>
     <div class="boot-text">Memuat sistem operasional kos...</div>
   </div>
 
@@ -18,7 +19,7 @@
     <div class="login-visual">
       <div class="login-visual-inner">
         <div class="brand brand-light">
-          <span class="brand-mark">K</span>
+          <span class="brand-mark"><img src="assets/logo.png" alt=""></span>
           <span class="brand-text"><strong id="login-property-name">Kos Mawar Indah</strong><small>Sistem Operasional Kos</small></span>
         </div>
         <h1>Kelola hunian, tagihan, dan keuangan dalam satu sistem.</h1>
@@ -64,7 +65,7 @@
     <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
     <aside id="sidebar" class="sidebar">
       <div class="brand brand-light sidebar-brand">
-        <span class="brand-mark">K</span>
+        <span class="brand-mark"><img src="assets/logo.png" alt=""></span>
         <span class="brand-text"><strong id="property-name">Kos Mawar Indah</strong><small>Sistem Operasional</small></span>
       </div>
       <nav id="nav" class="nav" aria-label="Navigasi utama"></nav>
@@ -106,21 +107,22 @@
 
   <div id="modal-root"></div>
   <div id="toast-root" class="toast-root" aria-live="polite"></div>
-  <script src="/js/api.js"></script>
-  <script src="/js/ui.js"></script>
-  <script src="/js/core.js"></script>
-  <script src="/js/pages/dashboard.js"></script>
-  <script src="/js/pages/rooms.js"></script>
-  <script src="/js/pages/tenants.js"></script>
-  <script src="/js/pages/reservations.js"></script>
-  <script src="/js/pages/billing.js"></script>
-  <script src="/js/pages/payments.js"></script>
-  <script src="/js/pages/services.js"></script>
-  <script src="/js/pages/expenses.js"></script>
-  <script src="/js/pages/finance.js"></script>
-  <script src="/js/pages/staff.js"></script>
-  <script src="/js/pages/reports.js"></script>
-  <script src="/js/pages/settings.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/rooms.js"></script>
+  <script src="js/pages/tenants.js"></script>
+  <script src="js/pages/reservations.js"></script>
+  <script src="js/pages/billing.js"></script>
+  <script src="js/pages/payments.js"></script>
+  <script src="js/pages/services.js"></script>
+  <script src="js/pages/expenses.js"></script>
+  <script src="js/pages/finance.js"></script>
+  <script src="js/pages/staff.js"></script>
+  <script src="js/pages/reports.js"></script>
+  <script src="js/pages/settings.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

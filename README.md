@@ -96,6 +96,7 @@ Aplikasi juga telah diuji pada peramban DOM (jsdom) untuk seluruh halaman dan in
 - `docs/BUSINESS_RULES.md` - aturan tagihan, pembayaran, deposit, transfer, dan laporan.
 - `docs/OPERATIONS.md` - panduan pengguna, backup, pemulihan, dan troubleshooting.
 - `docs/GOOGLE_SHEETS.md` - persiapan, setup, deployment, dan keamanan Google Sheets.
+- `docs/GITHUB_PAGES.md` - hosting frontend di GitHub Pages dengan bridge Apps Script.
 - `docs/TEST_RESULTS.md` - cakupan dan hasil pengujian.
 
 ## Google Sheets untuk produksi
@@ -107,6 +108,18 @@ npm run build:gas
 ```
 
 Tempel `src/code.gs` dan `src/appsscript.json` ke proyek Apps Script. Jalankan `setupProduction()` untuk database produksi tanpa data demo, atau `setup()` untuk mencoba data demo. Panduan lengkap ada di `docs/GOOGLE_SHEETS.md`.
+
+## GitHub Pages + Apps Script
+
+Frontend dapat dihosting sebagai situs statis di GitHub Pages. Isi `public/js/config.js` dengan URL deployment Apps Script:
+
+```javascript
+window.KOS_CONFIG = {
+  gasBridgeUrl: 'https://script.google.com/macros/s/XXXXXXXX/exec'
+};
+```
+
+Aktifkan `Settings > Pages > Source: GitHub Actions`, lalu push ke `main`. Panduan lengkap ada di `docs/GITHUB_PAGES.md`.
 
 ## Catatan implementasi
 

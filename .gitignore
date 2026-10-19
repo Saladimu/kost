@@ -3,3 +3,5 @@ data/db.json
 data/backups/
 *.log
 .DS_Store
+
+*.swp

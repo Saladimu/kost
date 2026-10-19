@@ -1,5 +1,18 @@
 const SETUP_HTML = '<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Setup Sistem Operasional Kos</title><style>body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:40px}main{max-width:680px;margin:0 auto;background:#1e293b;padding:32px;border-radius:16px}h1{margin-top:0;color:#5eead4}code{background:#0f172a;padding:2px 6px;border-radius:4px}ol{line-height:1.9}</style></head><body><main><h1>Setup diperlukan</h1><p>Google Sheets belum terhubung ke aplikasi ini.</p><ol><li>Buka editor Apps Script.</li><li>Jalankan fungsi <code>setup()</code> satu kali.</li><li>Izinkan akses Spreadsheet, Drive, dan Triggers.</li><li>Deploy ulang sebagai Web App dan buka URL deployment.</li></ol><p>Fungsi <code>setup()</code> membuat spreadsheet baru, seluruh tab, data awal, dan trigger harian.</p></main></body></html>';
 
+const SCRIPT_END = '</' + 'script>';
+
+function bridgeResponseHtml(result, id, origin) {
+  const safeResult = JSON.stringify(result).replace(/</g, '\\u003c');
+  const safeId = JSON.stringify(String(id || ''));
+  const safeOrigin = JSON.stringify(String(origin || '*'));
+  return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>KOS Bridge</title>' +
+    '<style>html,body{margin:0;padding:0;background:transparent}</style></head><body>' +
+    '<' + 'script>(function(){try{window.top.postMessage({channel:"kos-bridge",type:"response",id:' +
+    safeId + ',result:' + safeResult + '},' + safeOrigin + ');}catch(error){}})();' + SCRIPT_END +
+    '</body></html>';
+}
+
 function setup() {
   const properties = PropertiesService.getScriptProperties();
   let id = properties.getProperty('SPREADSHEET_ID');
@@ -135,18 +148,26 @@ function doGet(event) {
 }
 
 function doPost(event) {
+  const params = (event && event.parameter) || {};
   let payload = {};
   try {
     if (event && event.postData && event.postData.contents) payload = JSON.parse(event.postData.contents);
   } catch (error) {
     payload = {};
   }
-  const params = (event && event.parameter) || {};
+  if ((!payload || !payload.path) && params.payload) {
+    try { payload = JSON.parse(params.payload); } catch (error) { payload = {}; }
+  }
   const result = gasApi(
     payload.token || params.token || '',
     payload.method || params.method || 'POST',
     payload.path || params.path || '/',
     payload.body || payload.data || {}
   );
+  if (params.bridgeResponse === '1') {
+    return HtmlService.createHtmlOutput(bridgeResponseHtml(result, params.id, payload.origin || params.origin))
+      .setTitle('KOS Bridge')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }

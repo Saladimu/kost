@@ -28,11 +28,17 @@ function moduleFactory(id, source) {
   return `__define(${JSON.stringify(id)}, function (module, exports, require) {\n${source}\n});\n`;
 }
 
+function dataUri(relative, mime) {
+  const file = path.join(ROOT, 'public', relative);
+  if (!fs.existsSync(file)) throw new Error(`Aset frontend tidak ditemukan: ${relative}`);
+  return `data:${mime};base64,${fs.readFileSync(file).toString('base64')}`;
+}
+
 function buildFrontend() {
   const indexPath = path.join(ROOT, 'public', 'index.html');
   let html = fs.readFileSync(indexPath, 'utf8');
   const css = fs.readFileSync(path.join(ROOT, 'public', 'css', 'styles.css'), 'utf8');
-  html = html.replace('<link rel="stylesheet" href="/css/styles.css">', `<style>\n${css}\n</style>`);
+  html = html.replace('<link rel="stylesheet" href="css/styles.css">', `<style>\n${css}\n</style>`);
   html = html.replace(/<script src="([^"]+)"><\/script>/g, (match, src) => {
     const relative = src.replace(/^\//, '');
     const file = path.join(ROOT, 'public', relative);
@@ -40,6 +46,12 @@ function buildFrontend() {
     const script = fs.readFileSync(file, 'utf8').replace(/<\/script/gi, '<\\/script');
     return `<script>\n${script}\n</script>`;
   });
+  const assets = {
+    'assets/logo.png': dataUri('assets/logo.png', 'image/png'),
+    'assets/favicon.ico': dataUri('assets/favicon.ico', 'image/x-icon'),
+    'assets/apple-touch-icon.png': dataUri('assets/apple-touch-icon.png', 'image/png'),
+  };
+  Object.keys(assets).forEach((asset) => { html = html.split(asset).join(assets[asset]); });
   return html;
 }
 
