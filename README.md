@@ -98,6 +98,7 @@ Aplikasi juga telah diuji pada peramban DOM (jsdom) untuk seluruh halaman dan in
 - `docs/GOOGLE_SHEETS.md` - persiapan, setup, deployment, dan keamanan Google Sheets.
 - `docs/GITHUB_PAGES.md` - hosting frontend di GitHub Pages dengan bridge Apps Script.
 - `docs/TEST_RESULTS.md` - cakupan dan hasil pengujian.
+- `AGENTS.md` - konfigurasi, deployment, caching, dan catatan penting untuk agen AI.
 
 ## Google Sheets untuk produksi
 
