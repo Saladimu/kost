@@ -105,11 +105,8 @@ function valueForSheet_(value) {
 }
 
 function readRows_(sheet) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return [];
-  const lastColumn = sheet.getLastColumn();
-  if (lastColumn < 1) return [];
-  const values = sheet.getRange(1, 1, lastRow, lastColumn).getValues();
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) return [];
   const headers = values[0].map((header) => String(header || '').trim());
   const rows = [];
   for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
@@ -151,10 +148,9 @@ function writeRows_(sheet, baseHeaders, rows) {
 }
 
 function readMeta_(sheet) {
-  const lastRow = sheet.getLastRow();
   const meta = { schemaVersion: 1, createdAt: nowISO(), updatedAt: nowISO(), counters: {}, demoPaymentsSeeded: false };
-  if (lastRow < 2) return meta;
-  const values = sheet.getRange(1, 1, lastRow, 2).getValues();
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) return meta;
   for (let index = 1; index < values.length; index += 1) {
     if (String(values[index][0]) === 'meta' && values[index][1]) {
       try {
@@ -187,11 +183,11 @@ function remember_(db, state) {
 function load(options) {
   const allowSeed = !options || options.seed !== false;
   const spreadsheet = openSpreadsheet_();
-  const metaSheet = ensureSheet_(spreadsheet, 'Meta', ['Key', 'Value']);
+  const metaSheet = spreadsheet.getSheetByName('Meta') || ensureSheet_(spreadsheet, 'Meta', ['Key', 'Value']);
   const db = emptyDb_();
   db.meta = readMeta_(metaSheet);
   COLLECTIONS.forEach((key) => {
-    const sheet = ensureSheet_(spreadsheet, TABS[key], HEADERS[key]);
+    const sheet = spreadsheet.getSheetByName(TABS[key]) || ensureSheet_(spreadsheet, TABS[key], HEADERS[key]);
     db[key] = readRows_(sheet);
   });
 
@@ -202,6 +198,14 @@ function load(options) {
   }
   remember_(db, snapshot_(db));
   return db;
+}
+
+function bumpApiCacheVersion_() {
+  try {
+    PropertiesService.getScriptProperties().setProperty('API_CACHE_VERSION', Utilities.getUuid());
+  } catch (error) {
+    // Cached reads simply expire after their TTL when versioning is unavailable.
+  }
 }
 
 function save(db) {
@@ -219,6 +223,7 @@ function save(db) {
   metaSheet.clearContents();
   metaSheet.getRange(1, 1, 2, 2).setValues([['Key', 'Value'], ['meta', JSON.stringify(db.meta)]]);
   SpreadsheetApp.flush();
+  bumpApiCacheVersion_();
   remember_(db, snapshot_(db));
   return db;
 }

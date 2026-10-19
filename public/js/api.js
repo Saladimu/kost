@@ -4,8 +4,25 @@ const API = (() => {
   const TOKEN_KEY = 'kos_gas_token';
   const BRIDGE_CHANNEL = 'kos-bridge';
   const BRIDGE_TIMEOUT = 45000;
+  const GET_TTL = 15000;
   let memoryToken = '';
   const bridgePending = {};
+  const getCache = new Map();
+  const inflight = new Map();
+  let cacheGeneration = 0;
+
+  function clearGetCache() {
+    cacheGeneration += 1;
+    getCache.clear();
+    inflight.clear();
+  }
+
+  function clone(value) {
+    if (typeof structuredClone === 'function') {
+      try { return structuredClone(value); } catch (error) { /* fall back to JSON */ }
+    }
+    return JSON.parse(JSON.stringify(value));
+  }
 
   function isGas() {
     return typeof google !== 'undefined' && google.script && google.script.run;
@@ -27,11 +44,13 @@ const API = (() => {
 
   function writeToken(token) {
     memoryToken = token;
+    clearGetCache();
     try { sessionStorage.setItem(TOKEN_KEY, token); } catch (error) { /* storage may be unavailable */ }
   }
 
   function clearToken() {
     memoryToken = '';
+    clearGetCache();
     try { sessionStorage.removeItem(TOKEN_KEY); } catch (error) { /* storage may be unavailable */ }
   }
 
@@ -147,12 +166,14 @@ const API = (() => {
   }
 
   async function request(path, options = {}) {
-    if (isGas()) return gasRequest(path, options.method || 'GET', options.body);
-    if (configuredBridgeUrl()) return bridgeRequest(path, options.method || 'GET', options.body);
+    const method = options.method || 'GET';
+    if (method !== 'GET') clearGetCache();
+    if (isGas()) return gasRequest(path, method, options.body);
+    if (configuredBridgeUrl()) return bridgeRequest(path, method, options.body);
     if (location.protocol === 'file:' || /(^|\.)github\.io$/.test(location.hostname)) {
       throw new Error('Backend Apps Script belum diatur. Isi gasBridgeUrl pada js/config.js dengan URL deployment /exec.');
     }
-    const config = { method: options.method || 'GET', headers: {}, credentials: 'same-origin' };
+    const config = { method, headers: {}, credentials: 'same-origin' };
     if (options.body !== undefined) {
       config.headers['Content-Type'] = 'application/json';
       config.body = JSON.stringify(options.body);
@@ -183,7 +204,21 @@ const API = (() => {
       const usable = Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '');
       if (usable.length) query = `?${new URLSearchParams(usable).toString()}`;
     }
-    return request(`${path}${query}`);
+    const fullPath = `${path}${query}`;
+    const cached = getCache.get(fullPath);
+    if (cached && cached.expires > Date.now()) return Promise.resolve(clone(cached.data));
+    if (inflight.has(fullPath)) return inflight.get(fullPath);
+    const generation = cacheGeneration;
+    const promise = request(fullPath).then((data) => {
+      if (generation === cacheGeneration) getCache.set(fullPath, { data: clone(data), expires: Date.now() + GET_TTL });
+      inflight.delete(fullPath);
+      return data;
+    }, (error) => {
+      inflight.delete(fullPath);
+      throw error;
+    });
+    inflight.set(fullPath, promise);
+    return promise;
   }
 
   window.addEventListener('message', onBridgeMessage);

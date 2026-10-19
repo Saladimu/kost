@@ -19,15 +19,19 @@ window.App = {
     return Array.isArray(actions) && (actions.includes('*') || actions.includes(action));
   },
 
-  async refreshMeta() {
-    const meta = await API.get('/bootstrap');
-    this.meta = meta;
-    this.property = meta.property || this.property;
+  applyMeta(meta) {
+    this.meta = meta || {};
+    if (this.meta.user) this.user = this.meta.user;
+    this.property = this.meta.property || this.property;
     const nameEl = document.getElementById('property-name');
     if (nameEl) nameEl.textContent = this.property.name || 'Sistem Operasional Kos';
     const loginName = document.getElementById('login-property-name');
     if (loginName) loginName.textContent = this.property.name || 'Sistem Operasional Kos';
-    return meta;
+    return this.meta;
+  },
+
+  async refreshMeta() {
+    return this.applyMeta(await API.get('/bootstrap'));
   },
 
   navigate(hash) {

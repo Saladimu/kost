@@ -17,9 +17,10 @@ function parseApiTarget_(rawPath) {
   return { path, query };
 }
 
-function bootstrapPayload_(db, user, services) {
+function bootstrapPayload_(db, user, services, token) {
   const { can } = services.auth;
-  return {
+  const payload = {
+    user,
     property: {
       name: services.common.getSetting(db, 'PropertyName', 'Kos'),
       address: services.common.getSetting(db, 'PropertyAddress', ''),
@@ -41,6 +42,26 @@ function bootstrapPayload_(db, user, services) {
     settings: can(user, 'settings', 'read') ? services.masters.listSettings(db) : [],
     users: can(user, 'users', 'read') ? services.users.listUsers(db) : [],
   };
+  if (can(user, 'dashboard', 'read')) {
+    try {
+      const from = services.util.monthStart();
+      const to = services.util.monthEnd();
+      const page = dashboardPage_(db, user, services, { from, to });
+      writeApiCache_(apiCacheKey_(token || '', '/api/dashboard-page', { from, to }), ok_(page));
+    } catch (error) {
+      // Dashboard prefetch is best effort; the page falls back to its own request.
+    }
+  }
+  return payload;
+}
+
+function dashboardPage_(db, user, services, filters) {
+  const { can } = services.auth;
+  return {
+    dashboard: services.reports.getDashboard(db, filters || {}, user),
+    revenue: can(user, 'reports', 'read') ? services.reports.getRevenueSummary(db) : [],
+    activities: can(user, 'activities', 'read') ? services.activities.listActivities(db, { status: 'Pending' }, user) : [],
+  };
 }
 
 function ok_(data) {
@@ -49,6 +70,58 @@ function ok_(data) {
 
 function mutate_(work) {
   return __require('db').withLock(work);
+}
+
+const API_CACHE_PREFIX = 'kos_api_';
+const API_CACHE_TTL_SECONDS = 30;
+const API_CACHE_MAX_CHARS = 45000;
+
+function apiCache_() {
+  try {
+    const documentCache = CacheService.getDocumentCache();
+    if (documentCache) return documentCache;
+  } catch (error) {
+    // Standalone scripts have no document cache; use the script cache instead.
+  }
+  return CacheService.getScriptCache();
+}
+
+function apiCacheVersion_() {
+  try {
+    return PropertiesService.getScriptProperties().getProperty('API_CACHE_VERSION') || '0';
+  } catch (error) {
+    return '0';
+  }
+}
+
+function apiCacheKey_(token, path, query) {
+  const source = `${apiCacheVersion_()}\n${path}\n${JSON.stringify(query || {})}\n${token || ''}`;
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, source);
+  let hex = '';
+  for (let index = 0; index < digest.length; index += 1) {
+    const value = digest[index] < 0 ? digest[index] + 256 : digest[index];
+    hex += (value < 16 ? '0' : '') + value.toString(16);
+  }
+  return `${API_CACHE_PREFIX}${hex}`;
+}
+
+function readApiCache_(key) {
+  try {
+    const raw = apiCache_().get(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeApiCache_(key, result) {
+  try {
+    const text = JSON.stringify(result);
+    if (text.length > API_CACHE_MAX_CHARS) return;
+    apiCache_().put(key, text, API_CACHE_TTL_SECONDS);
+  } catch (error) {
+    // Read responses remain uncached when the script cache is unavailable or full.
+  }
 }
 
 function handleApi_(token, method, path, q, body) {
@@ -82,7 +155,11 @@ function handleApi_(token, method, path, q, body) {
     const db = DB.load();
     const result = auth.login(db, body.email, body.password);
     const fresh = auth.sessionUser(db, result.token);
-    return { ok: true, data: { user: fresh }, token: result.token };
+    return {
+      ok: true,
+      data: { user: fresh, bootstrap: bootstrapPayload_(db, fresh, services, result.token) },
+      token: result.token,
+    };
   }
   if (path === '/api/auth/logout' && method === 'POST') {
     auth.logout(token);
@@ -96,7 +173,11 @@ function handleApi_(token, method, path, q, body) {
 
   if (path === '/api/bootstrap' && method === 'GET') {
     auth.guard(user, 'dashboard', 'read');
-    return ok_(bootstrapPayload_(db, user, services));
+    return ok_(bootstrapPayload_(db, user, services, token));
+  }
+  if (path === '/api/dashboard-page' && method === 'GET') {
+    auth.guard(user, 'dashboard', 'read');
+    return ok_(dashboardPage_(db, user, services, q));
   }
   if (path === '/api/dashboard' && method === 'GET') {
     auth.guard(user, 'dashboard', 'read');
@@ -356,7 +437,16 @@ function gasApi(token, method, path, body) {
   try {
     const target = parseApiTarget_(path);
     const payload = body && typeof body === 'object' ? body : {};
-    return handleApi_(token || '', String(method || 'GET').toUpperCase(), target.path, target.query, payload);
+    const verb = String(method || 'GET').toUpperCase();
+    if (verb === 'GET' && target.path !== '/api/health') {
+      const key = apiCacheKey_(token || '', target.path, target.query);
+      const cached = readApiCache_(key);
+      if (cached) return cached;
+      const result = handleApi_(token || '', verb, target.path, target.query, payload);
+      if (result && result.ok) writeApiCache_(key, result);
+      return result;
+    }
+    return handleApi_(token || '', verb, target.path, target.query, payload);
   } catch (error) {
     return {
       ok: false,

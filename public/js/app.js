@@ -160,9 +160,11 @@
     if (booting) return;
     booting = true;
     try {
-      const me = await API.me();
-      App.user = me.user;
       await App.refreshMeta();
+      if (!App.user) {
+        const me = await API.me();
+        App.user = me.user;
+      }
       setUserChrome();
       renderNav();
       showApp();
@@ -190,7 +192,8 @@
         const password = document.getElementById('login-password').value;
         const result = await API.login(email, password);
         App.user = result.user;
-        await App.refreshMeta();
+        if (result.bootstrap) App.applyMeta(result.bootstrap);
+        else await App.refreshMeta();
         setUserChrome();
         renderNav();
         showApp();

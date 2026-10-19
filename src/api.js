@@ -47,6 +47,7 @@ function requestId(req) {
 
 function bootstrapPayload(db, user) {
   return {
+    user,
     property: {
       name: getSetting(db, 'PropertyName', 'Kos'),
       address: getSetting(db, 'PropertyAddress', ''),
@@ -86,7 +87,7 @@ async function handle(req, res, url) {
     const result = login(db, body.email, body.password);
     setSessionCookie(res, result.token);
     const fresh = sessionUser(db, { headers: { cookie: `kos_session=${result.token}` } });
-    return ok(res, { user: fresh });
+    return ok(res, { user: fresh, bootstrap: bootstrapPayload(db, fresh) });
   }
   if (path === '/api/auth/logout' && method === 'POST') {
     logout(req);
@@ -105,6 +106,15 @@ async function handle(req, res, url) {
   if (path === '/api/dashboard' && method === 'GET') {
     guard(user, 'dashboard', 'read');
     return ok(res, reports.getDashboard(db, q, user));
+  }
+
+  if (path === '/api/dashboard-page' && method === 'GET') {
+    guard(user, 'dashboard', 'read');
+    return ok(res, {
+      dashboard: reports.getDashboard(db, q, user),
+      revenue: can(user, 'reports', 'read') ? reports.getRevenueSummary(db) : [],
+      activities: can(user, 'activities', 'read') ? activities.listActivities(db, { status: 'Pending' }, user) : [],
+    });
   }
 
   if (path === '/api/rooms' && method === 'GET') {

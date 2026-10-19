@@ -16,11 +16,22 @@ App.registerPage('dashboard', async (container, route) => {
   async function load() {
     UI.loading(container, 'Menyiapkan ringkasan operasional...');
     try {
-      const [data, revenue, activities] = await Promise.all([
-        API.get('/dashboard', { from: state.from, to: state.to }),
-        App.can('reports', 'read') ? API.get('/reports/revenue') : Promise.resolve([]),
-        App.can('activities', 'read') ? API.get('/activities', { status: 'Pending' }) : Promise.resolve([]),
-      ]);
+      let data;
+      let revenue;
+      let activities;
+      try {
+        const page = await API.get('/dashboard-page', { from: state.from, to: state.to });
+        data = page.dashboard;
+        revenue = page.revenue || [];
+        activities = page.activities || [];
+      } catch (error) {
+        if (error.status !== 404) throw error;
+        [data, revenue, activities] = await Promise.all([
+          API.get('/dashboard', { from: state.from, to: state.to }),
+          App.can('reports', 'read') ? API.get('/reports/revenue') : Promise.resolve([]),
+          App.can('activities', 'read') ? API.get('/activities', { status: 'Pending' }) : Promise.resolve([]),
+        ]);
+      }
       render(data, revenue, activities);
     } catch (error) {
       UI.pageError(container, error, load);

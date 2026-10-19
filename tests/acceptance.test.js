@@ -68,6 +68,10 @@ async function main() {
   const me = await request('GET', '/auth/me');
   assert.equal(me.user.Role, 'Owner');
 
+  const dashboardPage = await request('GET', '/dashboard-page');
+  assert.ok(dashboardPage.dashboard, 'Dashboard page harus memuat ringkasan.');
+  assert.ok(Array.isArray(dashboardPage.revenue), 'Dashboard page harus memuat tren pendapatan.');
+
   const rooms = await request('GET', '/rooms');
   assert.equal(rooms.length, 21, 'Seed harus memiliki 21 kamar.');
   const room = rooms.find((item) => item.AvailabilityStatus === 'Available');

@@ -185,7 +185,9 @@ Password pada versi Apps Script memakai iterasi SHA-256 dengan salt. Password ha
 ## 8. Batas dan pertimbangan produksi
 
 - Google Apps Script memiliki batas waktu eksekusi. Operasi normal untuk 21-100 kamar berada jauh di bawah batas, tetapi impor data besar harus dipecah.
-- Setiap request membaca seluruh tab yang diperlukan. Volume besar dan riwayat audit panjang akan memperlambat operasi.
+- Setiap request masih membaca tab yang dibutuhkan saat cache kosong. Volume besar dan riwayat audit panjang akan memperlambat operasi pertama.
+- Respons GET di-cache selama 30 detik per pengguna dan parameter. Setiap penulisan menaikkan versi cache sehingga data langsung segar setelah simpan. Respons di atas 45.000 karakter tidak di-cache.
+- Browser juga menyimpan hasil GET selama 15 detik, menggabungkan permintaan identik yang berjalan bersamaan, dan mengosongkan cache setiap kali ada POST.
 - Satu lock global mencegah penulisan bersamaan. Permintaan yang menunggu lebih dari 30 detik akan gagal.
 - Sesi disimpan di cache dan dapat hilang lebih awal bila cache dibersihkan.
 - Apps Script bukan API REST dengan header CORS. Integrasi eksternal sebaiknya memakai `doPost` dengan token atau memanggil Web App dari Apps Script lain.
