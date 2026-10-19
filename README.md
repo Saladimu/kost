@@ -2,7 +2,7 @@
 
 Aplikasi operasional rumah kos untuk 21-100 kamar: kamar, penghuni, reservasi, perjanjian sewa, tagihan bulanan, pembayaran bertahap, layanan tambahan, pengeluaran, deposit, tugas staf, dan laporan keuangan yang dapat direkonsiliasi.
 
-Aplikasi berjalan penuh secara lokal dengan Node.js tanpa dependensi eksternal. Antarmuka menggunakan Bahasa Indonesia, mata uang Rupiah, dan zona waktu Asia/Jakarta.
+Aplikasi berjalan penuh secara lokal dengan Node.js tanpa dependensi eksternal. Antarmuka menggunakan Bahasa Indonesia, mata uang Rupiah, dan zona waktu Asia/Jakarta. Untuk produksi, tersedia backend Google Apps Script dengan Google Sheets sebagai database pada `src/code.gs`.
 
 ## Menjalankan aplikasi
 
@@ -44,6 +44,7 @@ Basis data dibuat otomatis pada `data/db.json` saat pertama kali dijalankan, len
 - Laporan keuangan, harian, hunian, kartu penghuni, rekonsiliasi, dan jejak audit.
 - Ekspor CSV dan dokumen cetak untuk invoice, kuitansi, dan laporan.
 - Kontrol akses berbasis peran yang ditegakkan di server.
+- Backend Google Apps Script siap tempel dengan Google Sheets sebagai database produksi.
 
 ## Struktur proyek
 
@@ -56,11 +57,15 @@ src/
   seed.js              Skema awal dan data contoh
   bootstrap.js         Inisialisasi dan seeding operasional
   jobs.js              Tagihan harian, overdue, backup
+  code.gs              Backend Google Apps Script siap tempel (hasil build)
+  gas/                 Adapter Apps Script: Sheets, auth, password, jobs
   services/            Logika bisnis per domain
 public/
   index.html           Shell SPA
   css/styles.css       Tema responsif
   js/                  Klien API, komponen UI, router, halaman
+scripts/
+  build-gas.js         Membangun ulang src/code.gs
 tests/
   acceptance.test.js   Uji alur operasional end-to-end
 docs/                  Arsitektur, aturan bisnis, operasi, hasil uji
@@ -90,7 +95,18 @@ Aplikasi juga telah diuji pada peramban DOM (jsdom) untuk seluruh halaman dan in
 - `docs/ARCHITECTURE.md` - arsitektur, model data, API, keamanan, dan otomatisasi.
 - `docs/BUSINESS_RULES.md` - aturan tagihan, pembayaran, deposit, transfer, dan laporan.
 - `docs/OPERATIONS.md` - panduan pengguna, backup, pemulihan, dan troubleshooting.
+- `docs/GOOGLE_SHEETS.md` - persiapan, setup, deployment, dan keamanan Google Sheets.
 - `docs/TEST_RESULTS.md` - cakupan dan hasil pengujian.
+
+## Google Sheets untuk produksi
+
+Bangun backend Apps Script:
+
+```bash
+npm run build:gas
+```
+
+Tempel `src/code.gs` dan `src/appsscript.json` ke proyek Apps Script. Jalankan `setupProduction()` untuk database produksi tanpa data demo, atau `setup()` untuk mencoba data demo. Panduan lengkap ada di `docs/GOOGLE_SHEETS.md`.
 
 ## Catatan implementasi
 

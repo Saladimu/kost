@@ -63,12 +63,32 @@ Pengujian DOM dengan jsdom dilakukan pada sesi pengembangan:
 
 Uji jsdom bersifat pelengkap. Uji acceptance pada `tests/acceptance.test.js` adalah sumber verifikasi yang dapat dijalankan ulang dari repositori.
 
-## 5. Pemeriksaan statis
+## 5. Verifikasi backend Google Apps Script
+
+Bundel `src/code.gs` diuji dengan simulasi runtime Apps Script dan Google Sheets.
+
+Cakupan:
+
+- `setup()` membuat spreadsheet, tab, data demo, dan akun;
+- login owner dan bootstrap 21 kamar;
+- pembuatan penghuni dan check-in;
+- pembuatan tagihan dan pembayaran sebagian;
+- idempotensi pembayaran;
+- rekonsiliasi dan dashboard;
+- pemuatan ulang data dari tab spreadsheet;
+- HTML SPA tersisip dengan transport `google.script.run`;
+- `setupProduction()` membuat database kosong dengan satu owner;
+- password owner dihapus dari Script Properties;
+- setup produksi kedua ditolak untuk mencegah penimpaan data.
+
+Hasil: lulus.
+
+## 6. Pemeriksaan statis
 
 - `node --check` pada modul yang diubah: lulus.
 - Seluruh aset statis dan endpoint utama merespons sukses pada pemeriksaan sesi pengembangan.
 
-## 6. Catatan
+## 7. Catatan
 
 Pengujian belum mencakup:
 

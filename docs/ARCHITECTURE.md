@@ -154,3 +154,28 @@ Backup manual menghasilkan salinan JSON di `data/backups/`. Retensi dan prosedur
 - `public/js/app.js` menangani login, bootstrap, router hash, navigasi per izin, dan logout.
 
 Rute hash yang tersedia mencakup dashboard, rooms, room-types, tenants, reservations, agreements, invoices, payments, services, expenses, transactions, deposits, activities, staff, users, master-data, reports, dan settings.
+
+
+## 13. Target Google Apps Script
+
+`src/code.gs` adalah bundel mandiri untuk Google Apps Script. Bundel berisi:
+
+- adapter database Google Sheets dengan tab per koleksi;
+- autentikasi token melalui CacheService;
+- password berbasis iterasi SHA-256 dengan salt;
+- router API yang sama dengan versi Node.js;
+- antarmuka SPA yang disisipkan langsung ke HTML output;
+- trigger harian untuk tagihan, overdue, rekonsiliasi, dan backup Drive.
+
+Bundel dibangun dari `src/gas/`, `src/services/`, `src/util.js`, `src/seed.js`, `src/bootstrap.js`, dan aset `public/` melalui `npm run build:gas`. Sumber Node.js tetap menjadi acuan logika bisnis.
+
+Perbedaan runtime:
+
+| Aspek | Node.js | Google Apps Script |
+| --- | --- | --- |
+| Database | `data/db.json` | Google Sheets |
+| Sesi | Cookie dan memori proses | Token dan CacheService |
+| Password | scrypt | iterasi SHA-256 |
+| Penjadwalan | Timer proses | Trigger harian |
+| Backup | Berkas lokal | Salinan Google Drive |
+| Transport frontend | REST fetch | google.script.run |
