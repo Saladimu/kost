@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sistem Operasional Kos untuk mengelola kamar, penghuni, tagihan, pembayaran, dan laporan keuangan.">
+  <title>Sistem Operasional Kos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Cpath d='M16 46V22l16-8 16 8v24H16z' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M28 46V32h8v14' fill='none' stroke='%23fbbf24' stroke-width='4'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-mark">K</div>
+    <div class="boot-text">Memuat sistem operasional kos...</div>
+  </div>
+
+  <section id="login-screen" class="login-screen hidden" aria-label="Halaman masuk">
+    <div class="login-visual">
+      <div class="login-visual-inner">
+        <div class="brand brand-light">
+          <span class="brand-mark">K</span>
+          <span class="brand-text"><strong id="login-property-name">Kos Mawar Indah</strong><small>Sistem Operasional Kos</small></span>
+        </div>
+        <h1>Kelola hunian, tagihan, dan keuangan dalam satu sistem.</h1>
+        <p class="login-lead">Operasional harian yang rapi: ketersediaan kamar, perjanjian sewa, invoice bulanan, pembayaran bertahap, layanan tambahan, deposit, hingga laporan keuangan yang dapat direkonsiliasi.</p>
+        <ul class="login-features">
+          <li><span>01</span>Kamar, penghuni, dan reservasi terpusat</li>
+          <li><span>02</span>Tagihan bulanan otomatis dan idempoten</li>
+          <li><span>03</span>Pembayaran sebagian dengan alokasi yang teraudit</li>
+          <li><span>04</span>Laporan arus kas, piutang, dan deposit</li>
+        </ul>
+        <div class="login-footnote">Bahasa Indonesia &middot; Rupiah &middot; Siap operasional harian</div>
+      </div>
+    </div>
+    <div class="login-form-side">
+      <form id="login-form" class="login-card" autocomplete="on">
+        <div class="login-card-head">
+          <h2>Masuk ke sistem</h2>
+          <p>Gunakan akun staf yang sudah terdaftar.</p>
+        </div>
+        <label class="field">
+          <span>Email</span>
+          <input id="login-email" type="email" name="email" required placeholder="nama@kos.id" autocomplete="username">
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input id="login-password" type="password" name="password" required placeholder="Masukkan password" autocomplete="current-password">
+        </label>
+        <div id="login-error" class="form-error hidden"></div>
+        <button id="login-submit" class="btn btn-primary btn-block" type="submit">Masuk</button>
+        <div class="demo-accounts">
+          <div class="demo-title">Akun demo</div>
+          <button type="button" class="demo-account" data-email="owner@kos.id" data-password="owner123"><strong>Owner</strong><span>owner@kos.id</span><em>owner123</em></button>
+          <button type="button" class="demo-account" data-email="manager@kos.id" data-password="manager123"><strong>Manager</strong><span>manager@kos.id</span><em>manager123</em></button>
+          <button type="button" class="demo-account" data-email="resepsionis@kos.id" data-password="reception123"><strong>Receptionist</strong><span>resepsionis@kos.id</span><em>reception123</em></button>
+          <button type="button" class="demo-account" data-email="kasir@kos.id" data-password="cashier123"><strong>Cashier</strong><span>kasir@kos.id</span><em>cashier123</em></button>
+          <button type="button" class="demo-account" data-email="staf@kos.id" data-password="staff123"><strong>Operational Staff</strong><span>staf@kos.id</span><em>staff123</em></button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div id="app" class="app hidden">
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+    <aside id="sidebar" class="sidebar">
+      <div class="brand brand-light sidebar-brand">
+        <span class="brand-mark">K</span>
+        <span class="brand-text"><strong id="property-name">Kos Mawar Indah</strong><small>Sistem Operasional</small></span>
+      </div>
+      <nav id="nav" class="nav" aria-label="Navigasi utama"></nav>
+      <div class="sidebar-foot">
+        <div class="sidebar-foot-card">
+          <span class="dot"></span>
+          <div><strong>Data tersimpan</strong><small>Google Sheets-style ledger</small></div>
+        </div>
+        <div class="sidebar-version">Versi 1.0 &middot; IDR</div>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button id="menu-toggle" class="icon-btn menu-toggle" type="button" aria-label="Buka menu">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="topbar-title">
+          <h2 id="page-title">Dashboard</h2>
+          <span id="page-subtitle">Ringkasan operasional hari ini</span>
+        </div>
+        <div class="topbar-right">
+          <div class="today-chip" id="today-chip"></div>
+          <div class="user-menu">
+            <button id="user-button" class="user-button" type="button" aria-haspopup="true">
+              <span id="user-avatar" class="avatar">DL</span>
+              <span class="user-meta"><strong id="user-name">-</strong><small id="user-role">-</small></span>
+              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div id="user-dropdown" class="dropdown hidden">
+              <div class="dropdown-head"><strong id="dropdown-name">-</strong><span id="dropdown-email">-</span></div>
+              <button type="button" id="logout-button">Keluar dari sistem</button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main id="page" class="page" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/core.js"></script>
+  <script src="/js/pages/dashboard.js"></script>
+  <script src="/js/pages/rooms.js"></script>
+  <script src="/js/pages/tenants.js"></script>
+  <script src="/js/pages/reservations.js"></script>
+  <script src="/js/pages/billing.js"></script>
+  <script src="/js/pages/payments.js"></script>
+  <script src="/js/pages/services.js"></script>
+  <script src="/js/pages/expenses.js"></script>
+  <script src="/js/pages/finance.js"></script>
+  <script src="/js/pages/staff.js"></script>
+  <script src="/js/pages/reports.js"></script>
+  <script src="/js/pages/settings.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

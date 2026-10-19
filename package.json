@@ -1,0 +1,15 @@
+{
+  "name": "sistem-operasional-kos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistem Operasional Kos - boarding house management system",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node tests/acceptance.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
