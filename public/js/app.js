@@ -160,6 +160,12 @@
     if (booting) return;
     booting = true;
     try {
+      if (!API.hasToken()) {
+        await App.loadPublicBranding();
+        App.user = null;
+        showLogin();
+        return;
+      }
       await App.refreshMeta();
       if (!App.user) {
         const me = await API.me();
@@ -171,6 +177,7 @@
       await route();
     } catch (error) {
       App.user = null;
+      await App.loadPublicBranding();
       showLogin();
     } finally {
       booting = false;

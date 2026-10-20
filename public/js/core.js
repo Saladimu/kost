@@ -3,7 +3,7 @@
 window.App = {
   user: null,
   meta: {},
-  property: { name: 'Kos Mawar Indah', address: '', phone: '', currency: 'IDR' },
+  property: { name: 'Kelola Kos', address: '', phone: '', currency: 'IDR' },
   pages: {},
   currentRoute: '',
 
@@ -19,15 +19,32 @@ window.App = {
     return Array.isArray(actions) && (actions.includes('*') || actions.includes(action));
   },
 
+  applyBranding() {
+    const name = this.property.name || 'Kelola Kos';
+    const nameEl = document.getElementById('property-name');
+    if (nameEl) nameEl.textContent = name;
+    const loginName = document.getElementById('login-property-name');
+    if (loginName) loginName.textContent = name;
+  },
+
   applyMeta(meta) {
     this.meta = meta || {};
     if (this.meta.user) this.user = this.meta.user;
     this.property = this.meta.property || this.property;
-    const nameEl = document.getElementById('property-name');
-    if (nameEl) nameEl.textContent = this.property.name || 'Sistem Operasional Kos';
-    const loginName = document.getElementById('login-property-name');
-    if (loginName) loginName.textContent = this.property.name || 'Sistem Operasional Kos';
+    this.applyBranding();
     return this.meta;
+  },
+
+  async loadPublicBranding() {
+    try {
+      const data = await API.get('/public-config');
+      if (data && data.property) {
+        this.property = Object.assign({}, this.property, data.property);
+        this.applyBranding();
+      }
+    } catch (error) {
+      // Keep the neutral fallback when the public branding endpoint is unavailable.
+    }
   },
 
   async refreshMeta() {

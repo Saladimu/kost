@@ -138,6 +138,7 @@ docs/                     Architecture, rules, operations, deployment
 - Success response: `{ "ok": true, "data": ... }`
 - Failure response: `{ "ok": false, "error": "...", "code": "...", "status": 400 }`
 - Login through the GAS bridge also returns a `token`; the SPA stores it in `sessionStorage`.
+- `GET /api/public-config` is unauthenticated. It may expose only non-sensitive branding, currently the property name from `PropertyName`. The SPA uses it to render the login screen before authentication.
 - Authenticated endpoints require a valid session. RBAC is enforced server-side with `guard(user, module, action)`.
 - All endpoints must exist in both `src/api.js` and `src/gas/router.js` unless they are Node-only by design.
 - When adding a page that needs several read endpoints, prefer one composite endpoint or a bootstrap prefetch over multiple GAS round trips.

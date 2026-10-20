@@ -83,6 +83,10 @@ async function handle(req, res, url) {
 
   if (path === '/api/health') return ok(res, { status: 'ok', time: new Date().toISOString() });
 
+  if (path === '/api/public-config' && method === 'GET') {
+    return ok(res, { property: { name: getSetting(db, 'PropertyName', 'Kos') } });
+  }
+
   if (path === '/api/auth/login' && method === 'POST') {
     const result = login(db, body.email, body.password);
     setSessionCookie(res, result.token);

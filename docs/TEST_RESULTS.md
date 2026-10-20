@@ -88,7 +88,20 @@ Hasil: lulus.
 - `node --check` pada modul yang diubah: lulus.
 - Seluruh aset statis dan endpoint utama merespons sukses pada pemeriksaan sesi pengembangan.
 
-## 7. Catatan
+## 7. Verifikasi kinerja dan branding
+
+Harness runtime Apps Script dan harness frontend dijalankan pada sesi pengembangan:
+
+- `GET /api/public-config` dapat diakses tanpa login dan hanya mengembalikan nama properti.
+- Nama properti pada layar login mengikuti `PropertyName` dan berubah setelah pengaturan disimpan.
+- Login mengembalikan `bootstrap` dengan data pengguna.
+- Prefetch `/dashboard-page` melayani permintaan pertama tanpa pembacaan spreadsheet.
+- Cache GET GAS dan frontend tidak menyajikan data lama setelah operasi tulis.
+- Permintaan GET identik yang bersamaan dideduplikasi dan objek cache terisolasi dari mutasi pemanggil.
+
+Hasil: lulus.
+
+## 8. Catatan
 
 Pengujian belum mencakup:
 

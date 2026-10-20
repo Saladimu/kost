@@ -41,7 +41,7 @@ function buildSeed(db) {
   };
 
   db.settings = [
-    ['PropertyName', 'Kos Mawar Indah', 'Nama properti yang tampil pada invoice dan kuitansi'],
+    ['PropertyName', 'Kos', 'Nama properti yang tampil pada invoice dan kuitansi'],
     ['PropertyAddress', 'Jl. Melati Raya No. 18, Jakarta Selatan', 'Alamat properti'],
     ['PropertyPhone', '021-7654321', 'Nomor telepon properti'],
     ['Currency', 'IDR', 'Mata uang transaksi'],
@@ -57,7 +57,7 @@ function buildSeed(db) {
     ['DepositPolicy', 'Deposit dikembalikan setelah inspeksi kamar dan pelunasan tagihan.'],
     ['BillingPolicy', 'Sewa dibebankan penuh per periode bulanan sejak tanggal check-in. Tanggal 29-31 mengikuti hari terakhir bulan.'],
     ['PaymentPolicy', 'Kelebihan pembayaran dicatat sebagai kredit penghuni dan dapat dialokasikan ke invoice berikutnya.'],
-    ['CompanyFooter', 'Terima kasih telah mempercayakan hunian Anda kepada Kos Mawar Indah.'],
+    ['CompanyFooter', 'Terima kasih telah mempercayakan hunian Anda kepada kami.'],
   ].map(([key, value, description]) => ({
     SettingKey: key,
     SettingValue: value,

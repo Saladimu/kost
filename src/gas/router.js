@@ -167,6 +167,9 @@ function handleApi_(token, method, path, q, body) {
   }
 
   const db = DB.load();
+  if (path === '/api/public-config' && method === 'GET') {
+    return ok_({ property: { name: common.getSetting(db, 'PropertyName', 'Kos') } });
+  }
   const user = auth.sessionUser(db, token);
   if (!user) throw new AppError('Silakan login terlebih dahulu.', 401, 'UNAUTHORIZED');
   if (path === '/api/auth/me' && method === 'GET') return ok_({ user });
