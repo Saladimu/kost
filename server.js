@@ -5,9 +5,9 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 const { handle, fail } = require('./src/api');
-const { load, save } = require('./src/db');
-const { bootstrap } = require('./src/bootstrap');
-const { startScheduler } = require('./src/jobs');
+const { load, save, init, withLock, isPostgres } = require('./src/db');
+const { bootstrap, bootstrapLocal, seedDemoOperations } = require('./src/bootstrap');
+const { startScheduler, autoRun } = require('./src/jobs');
 const { AppError } = require('./src/util');
 const { logError } = require('./src/services/common');
 
@@ -73,10 +73,15 @@ const server = http.createServer(async (req, res) => {
         fail(res, error);
       } else {
         console.error(error);
+        const entry = { functionName: `${req.method} ${url.pathname}`, severity: 'ERROR', errorMessage: error.message };
         try {
-          const db = load();
-          logError(db, { functionName: `${req.method} ${url.pathname}`, severity: 'ERROR', errorMessage: error.message });
-          save(db);
+          if (isPostgres()) {
+            await withLock((db) => logError(db, entry));
+          } else {
+            const db = load();
+            logError(db, entry);
+            save(db);
+          }
         } catch (logFailure) {
           console.error('Gagal menulis system log:', logFailure.message);
         }
@@ -93,16 +98,30 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res, url.pathname);
 });
 
-try {
-  const result = bootstrap();
-  console.log(`Database siap. Invoice baru dari bootstrap: ${result.billingCount}`);
-} catch (error) {
-  console.error('Gagal menyiapkan database:', error);
-  process.exit(1);
+async function start() {
+  try {
+    await init();
+    const result = isPostgres()
+      ? await withLock((db) => {
+        const outcome = bootstrap(db);
+        seedDemoOperations(db, { persist: false });
+        return outcome;
+      })
+      : bootstrapLocal();
+    console.log(`Database siap (${isPostgres() ? 'postgres' : 'json'}). Invoice baru dari bootstrap: ${result.billingCount}`);
+    startScheduler(
+      load,
+      save,
+      undefined,
+      isPostgres() ? () => withLock((db) => autoRun(db, () => {})) : null,
+    );
+    server.listen(PORT, HOST, () => {
+      console.log(`Sistem Operasional Kos berjalan di http://${HOST}:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Gagal menyiapkan database:', error);
+    process.exit(1);
+  }
 }
 
-startScheduler(load, save);
-
-server.listen(PORT, HOST, () => {
-  console.log(`Sistem Operasional Kos berjalan di http://${HOST}:${PORT}`);
-});
+start();

@@ -1,7 +1,11 @@
 node_modules/
+.env
 data/db.json
+data/supabase-import.sql
+data/supabase-import-report.json
 data/backups/
 *.log
 .DS_Store
 
 *.swp
+.env.sw?

@@ -1,7 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { load } = require('./db');
+const { load, sync, isPostgres } = require('./db');
 const { guard, can, sessionUser, login, logout, setSessionCookie, clearSessionCookie } = require('./auth');
 const { AppError, today, cleanText } = require('./util');
 const { getSetting } = require('./services/common');
@@ -72,8 +72,6 @@ function bootstrapPayload(db, user) {
 async function handle(req, res, url) {
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const method = req.method.toUpperCase();
-  const db = load();
-  const user = sessionUser(db, req);
   const q = query(url);
   const rid = requestId(req);
   let body = {};
@@ -81,7 +79,11 @@ async function handle(req, res, url) {
     body = await readBody(req);
   }
 
-  if (path === '/api/health') return ok(res, { status: 'ok', time: new Date().toISOString() });
+  if (path === '/api/health') return ok(res, { status: 'ok', database: isPostgres() ? 'postgres' : 'json', time: new Date().toISOString() });
+
+  await sync();
+  const db = load();
+  const user = sessionUser(db, req);
 
   if (path === '/api/public-config' && method === 'GET') {
     return ok(res, { property: { name: getSetting(db, 'PropertyName', 'Kos') } });
@@ -367,7 +369,7 @@ async function handle(req, res, url) {
   }
   if (path === '/api/system/backup' && method === 'POST') {
     guard(user, 'system', 'run');
-    const target = jobs.backupDatabase();
+    const target = jobs.backupDatabase(isPostgres() ? load() : undefined);
     return ok(res, { file: target.split('/').slice(-2).join('/') });
   }
 

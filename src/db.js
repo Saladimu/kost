@@ -4,10 +4,47 @@ const fs = require('fs');
 const path = require('path');
 const { nowISO } = require('./util');
 const { buildSeed } = require('./seed');
+const { createDriver } = require('./pg/driver');
+const { createStore } = require('./pg/store');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'db.json');
 let cache = null;
 let writeQueue = Promise.resolve();
+let store = null;
+let initPromise = null;
+
+function postgresUrl() {
+  return process.env.SUPABASE_DB_URL || process.env.DATABASE_URL || '';
+}
+
+function isPostgres() {
+  return String(process.env.DB_BACKEND || '').toLowerCase() === 'postgres' || postgresUrl() !== '';
+}
+
+async function init() {
+  if (!isPostgres()) return null;
+  if (store) return cache;
+  if (!initPromise) {
+    initPromise = (async () => {
+      const driver = createDriver(postgresUrl());
+      store = createStore({
+        driver,
+        advisoryLock: String(process.env.PG_ADVISORY_LOCK || 'true').toLowerCase() !== 'false',
+        seedDemo: String(process.env.PG_SEED_DEMO || '').toLowerCase() === 'true',
+      });
+      await store.init();
+      cache = store.snapshot();
+      return cache;
+    })();
+  }
+  return initPromise;
+}
+
+async function sync() {
+  if (!store) return cache;
+  cache = await store.sync();
+  return cache;
+}
 
 function emptyDb() {
   return {
@@ -47,6 +84,10 @@ function ensureCollections(db) {
 }
 
 function load() {
+  if (isPostgres()) {
+    if (!cache) throw new Error('Database Postgres belum diinisialisasi.');
+    return cache;
+  }
   if (cache) return cache;
   if (fs.existsSync(DB_PATH)) {
     try {
@@ -71,6 +112,7 @@ function persist(db) {
 }
 
 function save(db = cache) {
+  if (isPostgres()) throw new Error('save() tidak tersedia pada mode Postgres; gunakan withLock().');
   if (!db) throw new Error('Database belum dimuat.');
   db.meta.updatedAt = nowISO();
   persist(db);
@@ -82,6 +124,16 @@ function save(db = cache) {
  * validation and persistence. Services mutate synchronously inside this lock.
  */
 async function withLock(work) {
+  if (isPostgres()) {
+    if (!store) await init();
+    const run = writeQueue.then(async () => {
+      const result = await store.withLock(work);
+      cache = store.snapshot();
+      return result;
+    });
+    writeQueue = run.catch(() => {});
+    return run;
+  }
   const run = writeQueue.then(async () => {
     const db = load();
     const result = await work(db);
@@ -94,6 +146,8 @@ async function withLock(work) {
 
 function resetCacheForTests() {
   cache = null;
+  store = null;
+  initPromise = null;
 }
 
-module.exports = { DB_PATH, load, save, withLock, resetCacheForTests };
+module.exports = { DB_PATH, load, save, withLock, init, sync, isPostgres, resetCacheForTests };

@@ -17,10 +17,15 @@ function runBillingJobs(db, { user = 'SYSTEM', asOf = today() } = {}) {
   return { asOf, billing, overdue: overdue.length, reconciliation: recon };
 }
 
-function backupDatabase() {
+function backupDatabase(db) {
   const dir = path.join(path.dirname(DB_PATH), 'backups');
   fs.mkdirSync(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  if (db) {
+    const target = path.join(dir, `supabase-${stamp}.json`);
+    fs.writeFileSync(target, JSON.stringify(db, null, 2));
+    return target;
+  }
   const target = path.join(dir, `db-${stamp}.json`);
   fs.copyFileSync(DB_PATH, target);
   return target;
@@ -35,10 +40,11 @@ function autoRun(db, save) {
   save(db);
 }
 
-function startScheduler(getDb, save, intervalMs = 6 * 60 * 60 * 1000) {
-  const timer = setInterval(() => {
+function startScheduler(getDb, save, intervalMs = 6 * 60 * 60 * 1000, exclusive = null) {
+  const timer = setInterval(async () => {
     try {
-      autoRun(getDb(), save);
+      if (exclusive) await exclusive();
+      else autoRun(getDb(), save);
     } catch (error) {
       console.error('Scheduler error:', error.message);
     }

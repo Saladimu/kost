@@ -2,7 +2,7 @@
 
 Aplikasi operasional rumah kos untuk 21-100 kamar: kamar, penghuni, reservasi, perjanjian sewa, tagihan bulanan, pembayaran bertahap, layanan tambahan, pengeluaran, deposit, tugas staf, dan laporan keuangan yang dapat direkonsiliasi.
 
-Aplikasi berjalan penuh secara lokal dengan Node.js tanpa dependensi eksternal. Antarmuka menggunakan Bahasa Indonesia, mata uang Rupiah, dan zona waktu Asia/Jakarta. Untuk produksi, tersedia backend Google Apps Script dengan Google Sheets sebagai database pada `src/code.gs`.
+Aplikasi berjalan penuh secara lokal dengan Node.js. Antarmuka menggunakan Bahasa Indonesia, mata uang Rupiah, dan zona waktu Asia/Jakarta. Basis data dapat berupa JSON lokal atau Supabase Postgres. Backend Google Apps Script dengan Google Sheets tetap tersedia pada `src/code.gs` untuk deployment lama.
 
 ## Menjalankan aplikasi
 
@@ -19,6 +19,8 @@ PORT=3005 npm start
 ```
 
 Basis data dibuat otomatis pada `data/db.json` saat pertama kali dijalankan, lengkap dengan data contoh 21 kamar, 4 tipe kamar, 6 penghuni, deposit, reservasi, layanan, staf, dan transaksi demo.
+
+Untuk memakai Supabase, lihat bagian [Supabase sebagai database](#supabase-sebagai-database).
 
 ### Akun demo
 
@@ -90,6 +92,14 @@ Uji membuat basis data sementara, menjalankan server pada port acak, lalu memver
 
 Aplikasi juga telah diuji pada peramban DOM (jsdom) untuk seluruh halaman dan interaksi formulir utama pada tiap peran.
 
+Untuk menguji lapisan Postgres tanpa server Postgres eksternal:
+
+```bash
+npm run test:pg
+```
+
+Uji ini memakai PGlite (devDependency) untuk memverifikasi pemetaan tabel, penulisan transaksional, counter, audit, login, dan persistensi setelah restart server.
+
 ## Dokumentasi
 
 - `docs/ARCHITECTURE.md` - arsitektur, model data, API, keamanan, dan otomatisasi.
@@ -100,6 +110,13 @@ Aplikasi juga telah diuji pada peramban DOM (jsdom) untuk seluruh halaman dan in
 - `docs/TEST_RESULTS.md` - cakupan dan hasil pengujian.
 - `docs/manuals/README.md` - indeks manual per peran, matriks akses, dan aturan data bersama.
 - `docs/manuals/owner.md`, `manager.md`, `receptionist.md`, `cashier.md`, `operational-staff.md` - panduan operasional masing-masing peran.
+- `docs/supabase/README.md` - draft arsitektur dan keputusan migrasi ke Supabase Postgres.
+- `docs/supabase/MIGRATION.md` - rencana migrasi data, rekonsiliasi, cutover, dan rollback.
+- `docs/supabase/STEP_BY_STEP.md` - panduan langkah demi langkah untuk pengguna baru Supabase.
+- `docs/supabase/0001_initial.sql` - draft skema Postgres.
+- `src/pg/` - driver, skema aplikasi, dan penyimpanan Postgres (snapshot, diff, advisory lock).
+- `scripts/import-supabase.js` - pembuat SQL impor dari `data/db.json`.
+- `scripts/check-supabase.js` - pemeriksaan koneksi, jumlah baris, dan saldo invoice pada Supabase.
 - `AGENTS.md` - konfigurasi, deployment, caching, dan catatan penting untuk agen AI.
 
 ## Google Sheets untuk produksi
@@ -124,8 +141,41 @@ window.KOS_CONFIG = {
 
 Ganti URL tersebut jika deployment Apps Script berubah. Jangan menghapus pemeriksaan hostname tanpa menyiapkan staging terpisah. Aktifkan `Settings > Pages > Source: GitHub Actions`, lalu push ke `main`. Panduan lengkap ada di `docs/GITHUB_PAGES.md`.
 
+## Supabase sebagai database
+
+Node API dapat memakai Supabase Postgres sebagai sumber kebenaran. Domain service tetap sinkron; lapisan `src/pg/` memuat snapshot kecil ke memori, menjalankan logika bisnis yang sama, lalu menyimpan perubahan baris secara transaksional di bawah advisory lock. Backend Apps Script tidak terpengaruh.
+
+Prasyarat: skema dan data sudah diimpor (lihat `docs/supabase/STEP_BY_STEP.md`), dan `node_modules` sudah terpasang (`npm install`).
+
+```bash
+export SUPABASE_DB_URL="postgresql://postgres.<ref>:<password>@<host>:5432/postgres"
+npm run check:supabase
+npm start
+```
+
+Gunakan connection string Postgres langsung atau session pooler (port 5432), bukan transaction pooler (6543). Jangan memakai anon key. Variabel opsional:
+
+| Variabel | Default | Kegunaan |
+| --- | --- | --- |
+| `DB_BACKEND` | otomatis | Set `postgres` untuk memaksa mode Postgres meski URL kosong (akan gagal dengan pesan jelas). |
+| `PG_SEED_DEMO` | `false` | Isi database kosong dengan data demo. Jangan dipakai pada database produksi. |
+| `PG_ADVISORY_LOCK` | `true` | Kunci tulis lintas instance. Jangan dimatikan di produksi. |
+| `PGSSLMODE` | `require` | Set `disable` hanya untuk Postgres lokal. |
+| `PG_POOL_MAX` | `5` | Jumlah koneksi pool. |
+
+Catatan penting:
+
+- Semua penulisan harus melalui API. Perubahan langsung di SQL Editor tidak menaikkan `__data_version`, sehingga instance yang sedang berjalan tidak melihatnya sampai restart.
+- Impor ulang menaikkan `__data_version`; instance yang berjalan akan memuat ulang snapshot pada request berikutnya.
+- Backup dari menu Sistem menulis ekspor JSON logis ke `data/backups/`. Untuk pemulihan bencana, tetap gunakan backup Supabase.
+- RLS aktif tanpa policy. Hanya role pemilik tabel (connection string `postgres`) yang dapat membaca/menulis.
+- Sajikan SPA dari proses Node yang sama (`npm start`) agar cookie sesi tetap same-origin. Frontend di Cloudflare Pages masih memakai bridge Apps Script sampai cutover; lihat catatan deployment di `docs/supabase/README.md`.
+- Tempatkan API sedekat mungkin dengan database; setiap request melakukan satu query versi ke Postgres.
+
+Panduan lengkap: `docs/supabase/README.md`, `docs/supabase/MIGRATION.md`, dan `docs/supabase/STEP_BY_STEP.md`.
+
 ## Catatan implementasi
 
-Spesifikasi awal menargetkan Google Apps Script dan Google Sheets. Lingkungan eksekusi ini tidak menyediakan Apps Script maupun Google Sheets, sehingga seluruh logika server diimplementasikan dengan Node.js dan basis data JSON transaksional. Model data, alur bisnis, aturan keuangan, peran, dan antarmuka tetap mengikuti spesifikasi. Satu sumber kebenaran data tetap dijaga di server; klien tidak pernah menghitung saldo final.
+Spesifikasi awal menargetkan Google Apps Script dan Google Sheets. Lingkungan eksekusi ini tidak menyediakan Apps Script maupun Google Sheets, sehingga seluruh logika server diimplementasikan dengan Node.js. Mode default memakai JSON transaksional; mode produksi dapat memakai Supabase Postgres melalui `src/pg/`. Model data, alur bisnis, aturan keuangan, peran, dan antarmuka tetap mengikuti spesifikasi. Satu sumber kebenaran data tetap dijaga di server; klien tidak pernah menghitung saldo final.
 
 Lihat `docs/OPERATIONS.md` bagian "Batasan dan rekomendasi" untuk catatan produksi.

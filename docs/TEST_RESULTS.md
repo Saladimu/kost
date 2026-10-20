@@ -1,6 +1,6 @@
 # Hasil Pengujian
 
-Tanggal verifikasi: 19 Oktober 2026.
+Tanggal verifikasi: 20 Oktober 2026.
 
 ## 1. Uji acceptance end-to-end
 
@@ -103,7 +103,38 @@ Harness runtime Apps Script dan harness frontend dijalankan pada sesi pengembang
 
 Hasil: lulus.
 
-## 8. Catatan
+## 8. Verifikasi impor Supabase
+
+Skema `docs/supabase/0001_initial.sql` dan hasil `scripts/import-supabase.js`
+dijalankan pada PostgreSQL lokal berbasis PGlite:
+
+- skema, trigger, view saldo invoice, dan RLS berhasil dibuat;
+- 132 baris data dan 20 counter masuk ke 21 tabel tanpa error;
+- `INV-0001` menghasilkan total `1530000`, terbayar `900000`, dan sisa `630000`;
+- menjalankan file SQL yang sama dua kali tidak menggandakan data;
+- validasi menolak total invoice yang tidak konsisten, hash non-scrypt, dan
+  occupancy aktif ganda.
+
+Hasil: lulus.
+
+## 9. Verifikasi adaptor Postgres
+
+`npm run test:pg` menjalankan dua uji terhadap PGlite melalui protokol wire
+Postgres asli:
+
+- `tests/pg-store.test.js`: memuat snapshot 21 tabel, login scrypt, view saldo,
+  kecocokan `AmountPaid`/`OutstandingBalance` hasil hitung ulang, penulisan
+  kamar baru, audit, perubahan setting, pembayaran sebagian, counter,
+  transaksi tanpa perubahan yang tidak menaikkan versi, dan pembacaan ulang
+  dari database;
+- `tests/pg-http.test.js`: menjalankan `server.js` dengan `pg` Pool, login
+  Owner, membaca 21 kamar, membuat penghuni, mematikan server, menyalakan
+  ulang, lalu memastikan penghuni dan versi data bertahan.
+
+Hasil: lulus (`22 kamar, 17 setting, 7 invoice`; tenant baru bertahan setelah
+restart).
+
+## 10. Catatan
 
 Pengujian belum mencakup:
 

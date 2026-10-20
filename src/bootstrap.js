@@ -14,7 +14,7 @@ function userByEmail(db, email) {
   return user;
 }
 
-function seedDemoOperations(db) {
+function seedDemoOperations(db, { persist = true } = {}) {
   if (db.meta.demoPaymentsSeeded) return;
   const cashier = userByEmail(db, 'kasir@kos.id');
   const receptionist = userByEmail(db, 'resepsionis@kos.id');
@@ -88,16 +88,21 @@ function seedDemoOperations(db) {
   db.meta.demoPaymentsSeeded = true;
   db.meta.demoSeededAt = new Date().toISOString();
   audit(db, { user: 'SYSTEM', action: 'SEED_DEMO_DATA', module: 'System', recordId: 'DEMO', next: 'Demo operations seeded' });
-  save(db);
+  if (persist) save(db);
 }
 
-function bootstrap() {
-  const db = load();
+function bootstrap(db) {
   const billing = generateMonthlyInvoices(db, { asOf: today(), user: 'SYSTEM' });
   updateOverdueInvoices(db, { asOf: today(), user: 'SYSTEM' });
-  save(db);
-  seedDemoOperations(db);
   return { billingCount: billing.count };
 }
 
-module.exports = { bootstrap, seedDemoOperations };
+function bootstrapLocal() {
+  const db = load();
+  const result = bootstrap(db);
+  seedDemoOperations(db);
+  save(db);
+  return result;
+}
+
+module.exports = { bootstrap, bootstrapLocal, seedDemoOperations };

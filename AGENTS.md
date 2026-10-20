@@ -4,30 +4,38 @@ Instructions for AI coding agents working on **Sistem Operasional Kos**.
 
 ## Project summary
 
-Boarding house operations system for 21-100 rooms. The UI is a vanilla JavaScript SPA in Bahasa Indonesia. It supports two interchangeable backends:
+Boarding house operations system for 21-100 rooms. The UI is a vanilla JavaScript SPA in Bahasa Indonesia. It supports three data modes:
 
 - **Local development:** Node.js HTTP server with a JSON file database.
-- **Production:** Google Apps Script Web App with Google Sheets as the database.
+- **Node production:** Node.js HTTP server with Supabase Postgres through a snapshot/diff persistence adapter in `src/pg/`.
+- **Legacy production:** Google Apps Script Web App with Google Sheets as the database.
 
-There are no third-party runtime dependencies. Keep it that way unless a strong reason is documented.
+`pg` is the only runtime dependency, required for the Supabase adapter. Do not add more runtime dependencies without a documented strong reason. The Apps Script bundle and `npm test` do not use `pg`.
 
 ## Commands
 
 ```bash
 npm start
 npm test
+npm run test:pg
 npm run build:gas
+npm run import:supabase
+npm run check:supabase
 ```
 
 - `npm start` runs the local server on port 3000.
-- `npm test` runs the end-to-end acceptance suite with a temporary database.
+- `npm test` runs the end-to-end acceptance suite against a temporary JSON database.
+- `npm run test:pg` runs the Postgres adapter and HTTP integration tests against embedded PGlite. It requires devDependencies (`npm install`).
 - `npm run build:gas` regenerates `src/code.gs` from `src/gas/*.js`, `src/services/*.js`, and the files in `public/`.
+- `npm run import:supabase` generates `data/supabase-import.sql` from `data/db.json`. It does not change the running backend.
+- `npm run check:supabase` validates the configured database: table counts, cache version, invoice balance, and duplicate active occupancies.
 
 Useful overrides:
 
 ```bash
 PORT=3005 npm start
 DB_PATH=/tmp/kos-test.json npm start
+SUPABASE_DB_URL=postgresql://... npm start
 ```
 
 Validation before finishing a task:
@@ -37,6 +45,8 @@ node --check <changed-js-file>
 npm test
 npm run build:gas
 ```
+
+Add `npm run test:pg` whenever `src/pg/`, `src/db.js`, `server.js`, `src/bootstrap.js`, `src/jobs.js`, or the schema mapping changes.
 
 `npm run build:gas` is mandatory whenever anything under `public/`, `src/gas/`, or `src/services/` changes, because the Apps Script bundle inlines the frontend and those modules.
 
@@ -48,9 +58,16 @@ npm run build:gas
 | --- | --- | --- |
 | `PORT` | `3000` | Local HTTP port |
 | `HOST` | `0.0.0.0` | Local bind address |
-| `DB_PATH` | `data/db.json` | JSON database path |
+| `DB_PATH` | `data/db.json` | JSON database path and backup directory base |
+| `SUPABASE_DB_URL` | none | Enables Postgres mode when set |
+| `DATABASE_URL` | none | Fallback for `SUPABASE_DB_URL` |
+| `DB_BACKEND` | auto | Set `postgres` to require the Postgres adapter |
+| `PG_SEED_DEMO` | `false` | Seed an empty Postgres database with demo data |
+| `PG_ADVISORY_LOCK` | `true` | Cross-instance write lock; keep enabled in production |
+| `PGSSLMODE` | `require` for remote hosts | Set `disable` for local Postgres |
+| `PG_POOL_MAX` | `5` | Maximum Postgres pool connections |
 
-`data/db.json` and `data/backups/` are ignored by Git. They are local runtime state.
+`data/db.json`, `data/backups/`, `data/supabase-import.sql`, and the import report are ignored by Git. They are local runtime state.
 
 ### Apps Script Script Properties
 
@@ -112,7 +129,11 @@ server.js                 Local HTTP server, static files, scheduler
 src/
   api.js                  Node REST router and bootstrap payload
   auth.js                 Node sessions and RBAC matrix
-  db.js                   JSON database, cache, write lock
+  db.js                   Backend selector: JSON or Postgres, cache, write lock
+  pg/
+    schema.js             App collection to table/PK mapping
+    store.js              Snapshot load, row diff, transactional writes
+    driver.js             pg Pool and SSL configuration
   seed.js                 Initial schema and demo data
   bootstrap.js            Operational demo seeding
   jobs.js                 Billing, overdue, backup jobs
@@ -134,6 +155,7 @@ public/
   js/app.js               Boot, login, routing, shell
   js/pages/*.js           Page renderers
 scripts/build-gas.js      GAS bundler
+scripts/import-supabase.js Supabase SQL importer
 tests/acceptance.test.js  End-to-end acceptance tests
 docs/                     Architecture, rules, operations, deployment
 ```
@@ -193,8 +215,10 @@ Frontend changes deploy through Cloudflare Pages after a push. Backend changes r
 
 ## Testing and quality gates
 
-- Run `npm test` for the Node backend and business flows.
+- Run `npm test` for the Node JSON backend and business flows.
+- Run `npm run test:pg` for the Postgres adapter, wire protocol, login, and restart persistence.
 - Rebuild the GAS bundle after frontend or shared-module changes.
+- Do not change `src/services/*.js` to async or SQL: they are shared with the synchronous GAS bundle. Postgres persistence lives in `src/pg/`.
 - For GAS-specific changes, use a mock harness or verify the affected endpoint against a staging Apps Script deployment.
 - Do not claim a deployment works without checking both the page and the API.
 - Keep `docs/TEST_RESULTS.md` current when behavior or coverage changes.
@@ -218,6 +242,10 @@ Frontend changes deploy through Cloudflare Pages after a push. Backend changes r
 - Enabling dashboard prefetch for a user without checking permissions; use `can()`.
 - Assuming public deployments are isolated from production Apps Script data.
 - Pointing a local host at production without understanding the hostname switch in `public/js/config.js`.
+- Writing to Supabase outside the API (SQL Editor, dashboard, psql). The adapter only detects changes through `id_counters.__data_version`; external writes are invisible until the API restarts.
+- Calling `DB.save()` in Postgres mode. Use `withLock()`; the adapter reloads, diffs, and commits rows.
+- Changing the Postgres schema without updating `src/pg/schema.js` and the importer column lists.
+- Assuming `npm test` exercises Postgres. It does not; use `npm run test:pg`.
 
 ## Documentation
 
@@ -231,3 +259,4 @@ Keep these files accurate when behavior changes:
 - `docs/GITHUB_PAGES.md`
 - `docs/TEST_RESULTS.md`
 - `docs/manuals/` (one guide per role; keep permissions and procedures aligned with RBAC and UI)
+- `docs/supabase/README.md`, `docs/supabase/MIGRATION.md`, and `docs/supabase/STEP_BY_STEP.md` (draft Postgres migration; keep the schema, importer, and cutover plan in sync if the data model changes)

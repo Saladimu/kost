@@ -26,6 +26,45 @@ Akun demo:
 
 Ganti kata sandi akun demo sebelum dipakai pada data nyata.
 
+### 1.1 Mode Supabase Postgres
+
+Mode ini dipakai untuk produksi. Domain service tetap sama; `src/pg/` memuat snapshot ke memori, menjalankan logika bisnis, lalu menyimpan perubahan baris dalam satu transaksi.
+
+1. Pastikan skema dan data sudah diimpor. Ikuti `docs/supabase/STEP_BY_STEP.md` sampai verifikasi berhasil.
+2. Pasang dependensi:
+
+   ```bash
+   npm install
+   ```
+
+3. Simpan connection string Postgres (bukan anon key) pada variabel lingkungan. Gunakan koneksi langsung atau session pooler port 5432:
+
+   ```bash
+   export SUPABASE_DB_URL="postgresql://postgres.<ref>:<password>@<host>:5432/postgres"
+   ```
+
+4. Periksa koneksi dan data:
+
+   ```bash
+   npm run check:supabase
+   ```
+
+5. Jalankan server:
+
+   ```bash
+   npm start
+   ```
+
+6. Pastikan `GET /api/health` melaporkan `"database": "postgres"`, lalu login dan buka Dashboard.
+
+Catatan:
+
+- Database kosong akan ditolak. Set `PG_SEED_DEMO=true` hanya untuk database demo baru.
+- Semua penulisan harus melalui aplikasi. Perubahan langsung di SQL Editor tidak terdeteksi sampai server restart.
+- Setelah impor ulang, server yang berjalan akan memuat snapshot baru pada request berikutnya.
+- Jangan mematikan `PG_ADVISORY_LOCK` di produksi; kunci ini mencegah dua instance menulis bersamaan.
+- Gunakan `PGSSLMODE=disable` hanya untuk Postgres lokal.
+
 ## 2. Alur kerja harian
 
 1. Buka Dashboard untuk melihat hunian, tagihan jatuh tempo, pembayaran, dan tugas.
@@ -50,7 +89,7 @@ curl -X POST http://localhost:3000/api/system/backup \
   -H "Cookie: <cookie-sesi>"
 ```
 
-Backup harian dijalankan scheduler ke `data/backups/`. Berkas backup adalah salinan JSON basis data.
+Backup harian dijalankan scheduler ke `data/backups/`. Berkas backup adalah salinan JSON basis data. Pada mode Postgres, endpoint backup menulis ekspor JSON logis ke `data/backups/supabase-*.json`. Untuk pemulihan bencana, tetap andalkan backup/PITR Supabase; ekspor JSON bukan pengganti `pg_dump`.
 
 Praktik yang disarankan:
 
@@ -116,6 +155,14 @@ Ubah melalui menu Pengaturan sebagai Owner. Perubahan berlaku untuk proses berik
 - Periksa pembayaran berstatus `Voided` dan alokasinya.
 - Periksa penyesuaian invoice dan diskon.
 - Jangan mengubah saldo secara manual; gunakan pembayaran, void, atau penyesuaian.
+
+### Server Postgres gagal mulai
+
+- `SUPABASE_DB_URL belum diisi`: variabel belum diekspor pada shell yang menjalankan server.
+- `Tabel Supabase belum lengkap`: skema `0001_initial.sql` belum dijalankan.
+- `Database Supabase kosong`: impor data atau set `PG_SEED_DEMO=true`.
+- `password authentication failed`: periksa password dan URL-encode karakter khusus.
+- Koneksi menggantung: gunakan session pooler port 5432, bukan transaction pooler 6543.
 
 ### Data terlihat tidak konsisten setelah restore
 

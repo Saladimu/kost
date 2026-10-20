@@ -8,9 +8,19 @@
     "start": "node server.js",
     "dev": "node server.js",
     "test": "node tests/acceptance.test.js",
-    "build:gas": "node scripts/build-gas.js"
+    "test:pg": "node tests/pg-store.test.js && node tests/pg-http.test.js",
+    "build:gas": "node scripts/build-gas.js",
+    "import:supabase": "node scripts/import-supabase.js",
+    "check:supabase": "node scripts/check-supabase.js"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@electric-sql/pglite-socket": "^0.2.13"
   }
 }

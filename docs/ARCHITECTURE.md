@@ -17,11 +17,24 @@ Server adalah satu-satunya sumber kebenaran. Klien tidak pernah menghitung saldo
 | `server.js` | HTTP server, static serving, security header, bootstrap, scheduler |
 | `src/api.js` | Routing endpoint, parsing body, guard sesi, pemanggilan layanan |
 | `src/auth.js` | Login, cookie sesi, matriks izin per peran |
-| `src/db.js` | Muat/simpan JSON, cache, antrean penulisan `withLock` |
+| `src/db.js` | Pemilih backend JSON/Postgres, cache, antrean penulisan `withLock` |
+| `src/pg/schema.js` | Pemetaan koleksi aplikasi ke tabel dan primary key |
+| `src/pg/store.js` | Snapshot Postgres, diff baris, transaksi, advisory lock |
+| `src/pg/driver.js` | Pool `pg` dan konfigurasi SSL |
 | `src/bootstrap.js` | Inisialisasi basis data, seeding demo, rekonsiliasi awal |
 | `src/jobs.js` | Tagihan harian, overdue, backup, scheduler 6 jam |
 | `src/seed.js` | Skema dan data contoh |
 | `src/util.js` | Tanggal, validasi, ID, jumlah uang, enum |
+
+## Mode Postgres
+
+`src/services/*.js` tetap sinkron karena dipakai juga oleh bundel Apps Script. Saat `SUPABASE_DB_URL` diisi, `src/db.js` membuat store Postgres:
+
+1. satu query `jsonb_build_object` memuat seluruh tabel ke snapshot kecil di memori;
+2. setiap request membandingkan `id_counters.__data_version`;
+3. setiap mutasi berjalan dalam transaksi dengan `pg_advisory_xact_lock`, memuat snapshot terbaru, menjalankan service yang sama, lalu menyimpan diff baris dan counter.
+
+Perubahan langsung di luar API tidak menaikkan versi cache; semua penulisan harus melalui API. Detail operasional ada di `docs/supabase/README.md`.
 
 ## Modul domain
 
@@ -173,7 +186,7 @@ Perbedaan runtime:
 
 | Aspek | Node.js | Google Apps Script |
 | --- | --- | --- |
-| Database | `data/db.json` | Google Sheets |
+| Database | `data/db.json` atau Supabase Postgres | Google Sheets |
 | Sesi | Cookie dan memori proses | Token dan CacheService |
 | Password | scrypt | iterasi SHA-256 |
 | Penjadwalan | Timer proses | Trigger harian |
