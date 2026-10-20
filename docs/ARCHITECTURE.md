@@ -130,6 +130,8 @@ Parameter laporan menggunakan query string: `from`, `to`, `date`, `tenantId`, `s
 
 - Password di-hash dengan `scrypt` dan salt acak.
 - Sesi disimpan di memori server dengan cookie `HttpOnly`, `SameSite=Lax`, masa berlaku 7 hari.
+- Sesi menyimpan fingerprint hash password. Perubahan password atau penonaktifan akun mencabut sesi lama pada request berikutnya.
+- Login dibatasi per email dengan `LOGIN_MAX_ATTEMPTS` dan `LOGIN_WINDOW_MS` untuk mengurangi brute force.
 - Setiap endpoint terlindungi memanggil `guard(user, module, action)`.
 - Matriks izin berada di `src/auth.js` dan dapat diaudit terpisah dari UI.
 - Output HTML klien di-escape melalui `UI.esc` sebelum disisipkan.

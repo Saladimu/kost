@@ -69,6 +69,8 @@ Add `npm run test:pg` whenever `src/pg/`, `src/db.js`, `server.js`, `src/bootstr
 | `PGSSLMODE` | `require` for remote hosts | Set `disable` for local Postgres |
 | `PG_POOL_MAX` | `5` | Maximum Postgres pool connections |
 | `COOKIE_SECURE` | `false` | Set `true` on HTTPS hosts to add `Secure` to the session cookie and enable HSTS |
+| `LOGIN_MAX_ATTEMPTS` | `5` | Failed logins per email before a temporary lock |
+| `LOGIN_WINDOW_MS` | `900000` | Login failure window and lock duration in milliseconds |
 
 `data/db.json`, `data/backups/`, `data/supabase-import.sql`, and the import report are ignored by Git. They are local runtime state.
 

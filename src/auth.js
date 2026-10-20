@@ -6,7 +6,63 @@ const { verifyPassword } = require('./password');
 
 const SESSION_COOKIE = 'kos_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = positiveNumber(process.env.LOGIN_MAX_ATTEMPTS, 5);
+const LOGIN_WINDOW_MS = positiveNumber(process.env.LOGIN_WINDOW_MS, 15 * 60 * 1000);
+const LOGIN_MAX_TRACKED = 1000;
 const sessions = new Map();
+const loginFailures = new Map();
+
+function positiveNumber(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
+function credentialFingerprint(user) {
+  return crypto.createHash('sha256').update(String(user.PasswordHash || '')).digest('base64');
+}
+
+function loginKey(email) {
+  return crypto.createHash('sha256').update(email).digest('base64');
+}
+
+function ensureLoginAllowed(key, now) {
+  const state = loginFailures.get(key);
+  if (!state) return;
+  if (state.lockedUntil && now < state.lockedUntil) {
+    const minutes = Math.max(1, Math.ceil((state.lockedUntil - now) / 60000));
+    throw new AppError(`Terlalu banyak percobaan login. Coba lagi dalam ${minutes} menit.`, 429, 'TOO_MANY_ATTEMPTS');
+  }
+  if (now - state.firstAt >= LOGIN_WINDOW_MS) loginFailures.delete(key);
+}
+
+function recordLoginFailure(key, now) {
+  let state = loginFailures.get(key);
+  if (!state || now - state.firstAt >= LOGIN_WINDOW_MS) {
+    state = { count: 0, firstAt: now, lockedUntil: 0 };
+  }
+  state.count += 1;
+  if (state.count >= LOGIN_MAX_ATTEMPTS) state.lockedUntil = now + LOGIN_WINDOW_MS;
+  loginFailures.set(key, state);
+}
+
+function pruneAuthState(now) {
+  if (sessions.size > 500) {
+    for (const [token, session] of sessions) {
+      if (now - session.createdAt > SESSION_TTL_MS) sessions.delete(token);
+    }
+  }
+  if (loginFailures.size <= LOGIN_MAX_TRACKED) return;
+  for (const [key, state] of loginFailures) {
+    if (loginFailures.size <= LOGIN_MAX_TRACKED) break;
+    if (now - state.firstAt >= LOGIN_WINDOW_MS && (!state.lockedUntil || now >= state.lockedUntil)) {
+      loginFailures.delete(key);
+    }
+  }
+  for (const key of loginFailures.keys()) {
+    if (loginFailures.size <= LOGIN_MAX_TRACKED) break;
+    loginFailures.delete(key);
+  }
+}
 
 const PERMISSIONS = {
   Owner: { '*': ['*'] },
@@ -90,13 +146,25 @@ function parseCookies(req) {
 }
 
 function login(db, email, password) {
-  const normalized = String(email || '').trim().toLowerCase();
+  const normalized = String(email || '').trim().toLowerCase().slice(0, 320);
+  const key = loginKey(normalized);
+  const candidate = String(password || '').slice(0, 1024);
+  const now = Date.now();
+  pruneAuthState(now);
+  ensureLoginAllowed(key, now);
   const user = db.users.find((u) => u.Email.toLowerCase() === normalized);
-  if (!user || user.IsActive !== 'TRUE' || !verifyPassword(String(password || ''), user.PasswordHash)) {
+  if (!user || user.IsActive !== 'TRUE' || !verifyPassword(candidate, user.PasswordHash)) {
+    recordLoginFailure(key, now);
     throw new AppError('Email atau password salah.', 401, 'INVALID_CREDENTIALS');
   }
+  loginFailures.delete(key);
   const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { UserID: user.UserID, createdAt: Date.now(), lastSeen: Date.now() });
+  sessions.set(token, {
+    UserID: user.UserID,
+    credential: credentialFingerprint(user),
+    createdAt: now,
+    lastSeen: now,
+  });
   return { token, user };
 }
 
@@ -110,13 +178,17 @@ function sessionUser(db, req) {
   if (!token) return null;
   const session = sessions.get(token);
   if (!session) return null;
-  if (Date.now() - session.createdAt > SESSION_TTL_MS) {
+  const now = Date.now();
+  if (now - session.createdAt > SESSION_TTL_MS) {
     sessions.delete(token);
     return null;
   }
-  session.lastSeen = Date.now();
   const user = db.users.find((u) => u.UserID === session.UserID && u.IsActive === 'TRUE');
-  if (!user) return null;
+  if (!user || !session.credential || session.credential !== credentialFingerprint(user)) {
+    sessions.delete(token);
+    return null;
+  }
+  session.lastSeen = now;
   const staff = db.staff.find((s) => s.StaffID === user.StaffID);
   return {
     UserID: user.UserID,

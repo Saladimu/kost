@@ -215,6 +215,9 @@ Produksi memakai layanan Node di Render dengan Supabase Postgres. Mode JSON dan 
 - Scheduler berjalan di dalam proses Node. Plan gratis Render dapat menjeda scheduler; gunakan plan Starter atau picu job dari luar.
 - Aktifkan backup/PITR Supabase. Ekspor JSON dari aplikasi bukan pengganti `pg_dump` atau PITR.
 - Ganti semua password demo dan nonaktifkan akun yang tidak dipakai sebelum membagikan URL produksi.
+- Login dibatasi per email: setelah `LOGIN_MAX_ATTEMPTS` gagal dalam `LOGIN_WINDOW_MS`, email dikunci sementara. Nilai bawaan adalah 5 percobaan dan 15 menit.
+- Sesi terikat pada hash password. Mengubah password atau menonaktifkan akun langsung mencabut sesi lama; restart juga mengeluarkan semua sesi.
+- Batas login disimpan di memori proses. Jika memakai lebih dari satu instance, gunakan penyimpanan bersama atau pembatas di reverse proxy.
 - Pantau `/api/health`, ukuran database, dan koneksi pool. Naikkan `PG_POOL_MAX` hanya setelah menghitung batas koneksi Supabase.
 - Berkas backup berada pada disk yang sama. Salin ke lokasi terpisah.
 - Gunakan HTTPS melalui reverse proxy tepercaya, batasi akses jaringan, dan ganti seluruh akun demo.

@@ -162,6 +162,8 @@ Gunakan connection string Postgres langsung atau session pooler (port 5432), buk
 | `PG_ADVISORY_LOCK` | `true` | Kunci tulis lintas instance. Jangan dimatikan di produksi. |
 | `PGSSLMODE` | `require` | Set `disable` hanya untuk Postgres lokal. |
 | `PG_POOL_MAX` | `5` | Jumlah koneksi pool. |
+| `LOGIN_MAX_ATTEMPTS` | `5` | Percobaan login gagal per email sebelum kunci sementara. |
+| `LOGIN_WINDOW_MS` | `900000` | Jendela percobaan gagal dan durasi kunci login (milidetik). |
 
 Catatan penting:
 

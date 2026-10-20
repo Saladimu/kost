@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
+const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 
@@ -40,13 +41,30 @@ async function request(method, endpoint, body, status = 200) {
   return payload.data;
 }
 
+function rawRequest(pathname, headers) {
+  return new Promise((resolve, reject) => {
+    const req = http.request({ host: '127.0.0.1', port, path: pathname, method: 'GET', headers }, (res) => {
+      res.resume();
+      res.on('end', () => resolve(res.statusCode));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 async function main() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kos-acceptance-'));
   const dbPath = path.join(dir, 'db.json');
 
   server = spawn(process.execPath, ['server.js'], {
     cwd: root,
-    env: { ...process.env, PORT: String(port), DB_PATH: dbPath },
+    env: {
+      ...process.env,
+      PORT: String(port),
+      DB_PATH: dbPath,
+      LOGIN_MAX_ATTEMPTS: '5',
+      LOGIN_WINDOW_MS: '900000',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let serverOutput = '';
@@ -56,6 +74,11 @@ async function main() {
   await waitForServer();
   const health = await request('GET', '/health');
   assert.equal(health.status, 'ok');
+
+  const badHostStatus = await rawRequest('/api/health', { Host: '[' });
+  assert.equal(badHostStatus, 200, 'Host header tidak valid tidak boleh menghentikan server.');
+  const healthAfterBadHost = await request('GET', '/health');
+  assert.equal(healthAfterBadHost.status, 'ok');
 
   const login = await fetch(`${base}/api/auth/login`, {
     method: 'POST',
@@ -252,6 +275,53 @@ async function main() {
     const forbidden = await fetch(`${base}/api${endpoint}`, { headers: { Cookie: staffCookie } });
     assert.equal(forbidden.status, 403, `Operational Staff tidak boleh mengakses ${endpoint}.`);
   }
+
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const failed = await fetch(`${base}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'tidak-ada@kos.id', password: 'salah123' }),
+    });
+    assert.equal(failed.status, 401, `Percobaan login gagal ke-${attempt} harus ditolak.`);
+  }
+  const throttled = await fetch(`${base}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'tidak-ada@kos.id', password: 'salah123' }),
+  });
+  const throttledBody = await throttled.json();
+  assert.equal(throttled.status, 429, 'Percobaan login berulang harus dibatasi.');
+  assert.equal(throttledBody.code, 'TOO_MANY_ATTEMPTS');
+
+  const users = await request('GET', '/users');
+  const cashier = users.find((item) => item.Email === 'kasir@kos.id');
+  assert.ok(cashier, 'Akun kasir demo harus tersedia.');
+  const cashierLogin = await fetch(`${base}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'kasir@kos.id', password: 'cashier123' }),
+  });
+  assert.equal(cashierLogin.status, 200);
+  const cashierCookie = cashierLogin.headers.get('set-cookie').split(';')[0];
+  const cashierBefore = await fetch(`${base}/api/auth/me`, { headers: { Cookie: cashierCookie } });
+  assert.equal(cashierBefore.status, 200);
+
+  await request('POST', '/users', { UserID: cashier.UserID, Password: 'cashier456' });
+  const cashierRevoked = await fetch(`${base}/api/auth/me`, { headers: { Cookie: cashierCookie } });
+  assert.equal(cashierRevoked.status, 401, 'Sesi lama harus dicabut setelah password berubah.');
+  const oldPassword = await fetch(`${base}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'kasir@kos.id', password: 'cashier123' }),
+  });
+  assert.equal(oldPassword.status, 401);
+  const newPassword = await fetch(`${base}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'kasir@kos.id', password: 'cashier456' }),
+  });
+  assert.equal(newPassword.status, 200);
+  await request('POST', '/users', { UserID: cashier.UserID, Password: 'cashier123' });
 
   const backup = await request('POST', '/system/backup', {});
   const backupPath = path.join(dir, backup.file);

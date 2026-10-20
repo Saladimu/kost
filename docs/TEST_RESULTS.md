@@ -15,6 +15,8 @@ Hasil: lulus.
 Cakupan:
 
 - health check dan login;
+- penolakan Host header tidak valid tanpa menghentikan server;
+- pembatasan percobaan login berulang dan pencabutan sesi setelah password berubah;
 - 21 kamar awal dan pembuatan penghuni;
 - penolakan reservasi yang bentrok;
 - check-in dan pembuatan tagihan;
