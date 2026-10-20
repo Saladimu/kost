@@ -68,7 +68,7 @@ Catatan:
 
 ### 1.2 Produksi di Render
 
-`render.yaml` menyiapkan satu layanan web Node di region Singapura.
+Status per 20 Oktober 2026: produksi aktif di `https://kelolakos.onrender.com` dengan Supabase Postgres. `render.yaml` menyiapkan satu layanan web Node di region Singapura.
 
 1. Buat **Blueprint** di Render dari repositori ini.
 2. Isi `SUPABASE_DB_URL` dengan connection string session pooler. Variabel lain sudah diatur di blueprint.
@@ -76,6 +76,18 @@ Catatan:
 4. Login sebagai Owner dan ganti seluruh password akun demo sebelum URL dibagikan.
 5. Plan gratis berhenti saat tidak aktif dan menjeda scheduler. Gunakan plan Starter untuk produksi selalu aktif.
 6. Filesystem Render sementara. Unduh `data/backups/` atau andalkan backup/PITR Supabase.
+
+Verifikasi produksi:
+
+```bash
+curl -sS https://kelolakos.onrender.com/api/health
+```
+
+Hasil yang diharapkan: `{"ok":true,"data":{"status":"ok","database":"postgres",...}}`. Login Owner dan `GET /api/rooms` pada URL tersebut juga sudah diverifikasi dan mengembalikan 21 kamar.
+
+Alamat `https://kelolakos.pages.dev` bukan produksi Supabase. Host `*.pages.dev` memakai bridge Apps Script dan Google Sheets, sehingga akun serta datanya terpisah. Gunakan hanya URL Render untuk data Supabase.
+
+Jika deploy pertama gagal dengan `getaddrinfo ENOTFOUND base`, nilai `SUPABASE_DB_URL` belum berupa URI lengkap. Perbaiki di tab **Environment**, simpan, lalu jalankan **Manual Deploy**.
 
 ## 2. Alur kerja harian
 
@@ -181,9 +193,11 @@ Ubah melalui menu Pengaturan sebagai Owner. Perubahan berlaku untuk proses berik
 ### Server Postgres gagal mulai
 
 - `SUPABASE_DB_URL belum diisi`: variabel belum diekspor pada shell yang menjalankan server.
+- `getaddrinfo ENOTFOUND base`: nilai `SUPABASE_DB_URL` bukan URI lengkap, misalnya hanya berisi nama database. Isi dengan URI `postgresql://...` dari session pooler.
 - `Tabel Supabase belum lengkap`: skema `0001_initial.sql` belum dijalankan.
 - `Database Supabase kosong`: impor data atau set `PG_SEED_DEMO=true`.
 - `password authentication failed`: periksa password dan URL-encode karakter khusus.
+- `getaddrinfo ENOTFOUND <host>` atau `ENETUNREACH`: host langsung Supabase mungkin hanya IPv6; gunakan session pooler port 5432.
 - Koneksi menggantung: gunakan session pooler port 5432, bukan transaction pooler 6543.
 
 ### Data terlihat tidak konsisten setelah restore

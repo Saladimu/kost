@@ -1,18 +1,22 @@
-# Supabase migration draft
+# Supabase Postgres
 
-Status: implemented for the Node API. The schema, importer, and Postgres
-persistence adapter are in use; the Google Apps Script backend is unchanged.
+Status: implemented and deployed. The schema, importer, and Postgres
+persistence adapter are in use on Render at `https://kelolakos.onrender.com`;
+the Google Apps Script backend is unchanged.
 
 Target architecture:
 
 ```text
-Cloudflare Pages (SPA)
-        |
-        v
-Node API (single writer, RBAC, audit)
+Render web service (SPA + Node API, same origin)
         |
         v
 Supabase Postgres (Singapore)
+
+Legacy static frontend:
+Cloudflare Pages / GitHub Pages
+        |
+        v
+Apps Script Web App -> Google Sheets
 ```
 
 The SPA keeps its current contract: `{ ok, data }` on success and
@@ -103,9 +107,14 @@ verification path. Do not import GAS hashes as if they were scrypt hashes.
 `public/js/config.js` uses the Apps Script bridge only on `*.pages.dev` and
 `*.github.io`. Every other host uses the same-origin Node API. Production runs
 `server.js` on Render with `SUPABASE_DB_URL` set; `render.yaml` defines the
-service, build command, health check, and required variables. Serving the SPA
-from the same Node process keeps session cookies same-origin and requires no
-CORS changes.
+service, build command, health check, and required variables. The live service
+is `https://kelolakos.onrender.com`, and `/api/health` reports
+`"database":"postgres"`. Serving the SPA from the same Node process keeps
+session cookies same-origin and requires no CORS changes.
+
+Cloudflare Pages at `https://kelolakos.pages.dev` is not the Supabase
+production frontend. It remains a static Apps Script client backed by Google
+Sheets, so its users and data are separate from Render.
 
 Using Cloudflare Pages or a custom static host as the SPA origin with the Node
 API on another origin is not supported yet: the session cookie is `SameSite=Lax`, so it is not sent on

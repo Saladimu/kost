@@ -110,10 +110,10 @@ Uji ini memakai PGlite (devDependency) untuk memverifikasi pemetaan tabel, penul
 - `docs/TEST_RESULTS.md` - cakupan dan hasil pengujian.
 - `docs/manuals/README.md` - indeks manual per peran, matriks akses, dan aturan data bersama.
 - `docs/manuals/owner.md`, `manager.md`, `receptionist.md`, `cashier.md`, `operational-staff.md` - panduan operasional masing-masing peran.
-- `docs/supabase/README.md` - draft arsitektur dan keputusan migrasi ke Supabase Postgres.
-- `docs/supabase/MIGRATION.md` - rencana migrasi data, rekonsiliasi, cutover, dan rollback.
+- `docs/supabase/README.md` - arsitektur, keputusan, dan status deployment Supabase Postgres.
+- `docs/supabase/MIGRATION.md` - runbook migrasi data, rekonsiliasi, cutover, dan rollback.
 - `docs/supabase/STEP_BY_STEP.md` - panduan langkah demi langkah untuk pengguna baru Supabase.
-- `docs/supabase/0001_initial.sql` - draft skema Postgres.
+- `docs/supabase/0001_initial.sql` - skema Postgres yang dipakai di produksi.
 - `src/pg/` - driver, skema aplikasi, dan penyimpanan Postgres (snapshot, diff, advisory lock).
 - `scripts/import-supabase.js` - pembuat SQL impor dari `data/db.json`.
 - `scripts/check-supabase.js` - pemeriksaan koneksi, jumlah baris, dan saldo invoice pada Supabase.
@@ -181,6 +181,13 @@ Repositori menyertakan `render.yaml` untuk layanan web Node di region Singapura.
 3. Pastikan variabel lain sesuai `render.yaml`: `DB_BACKEND=postgres`, `PGSSLMODE=require`, `PG_ADVISORY_LOCK=true`, `COOKIE_SECURE=true`.
 4. Tunggu deploy, lalu buka `https://<service>.onrender.com/api/health`. Nilainya harus `"database":"postgres"`.
 5. Login sebagai Owner, segera ganti seluruh password akun demo melalui menu Pengguna, lalu bagikan URL produksi.
+
+Status produksi (20 Oktober 2026):
+
+- URL produksi: `https://kelolakos.onrender.com`. Layanan berjalan dengan `"database":"postgres"` dan membaca 21 kamar dari Supabase.
+- Deploy pertama sempat gagal dengan `getaddrinfo ENOTFOUND base` karena `SUPABASE_DB_URL` belum berupa URI lengkap. Setelah nilai diperbaiki di **Environment**, deploy berikutnya berhasil.
+- `https://kelolakos.pages.dev` bukan alamat produksi Supabase. Host `*.pages.dev` tetap memakai bridge Apps Script dan Google Sheets, sehingga login serta datanya terpisah dari Render.
+- Login Owner dan `GET /api/rooms` sudah diverifikasi pada URL Render. Detail pengujian ada di `docs/TEST_RESULTS.md` bagian 10.
 
 Catatan operasional:
 

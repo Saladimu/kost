@@ -1,7 +1,7 @@
--- Sistem Operasional Kos - Supabase/Postgres schema draft.
+-- Sistem Operasional Kos - Supabase/Postgres schema.
 -- Target: PostgreSQL 15+ (Supabase).
 -- Assumption: primary keys remain text IDs with the existing prefixes.
--- This file is a draft. Move it to supabase/migrations/ after review.
+-- This schema is applied in production and is the source for new Supabase projects.
 
 create or replace function set_updated_at()
 returns trigger

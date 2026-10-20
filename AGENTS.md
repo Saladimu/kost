@@ -101,9 +101,16 @@ Transport priority in `public/js/api.js`:
 
 ### Render (production Node + Supabase)
 
-`render.yaml` defines a Singapore web service that builds with `npm ci --omit=dev`
-and runs `npm start`. Set `SUPABASE_DB_URL` in the Render dashboard; it is not
-stored in Git. `COOKIE_SECURE=true` requires HTTPS.
+Production URL: `https://kelolakos.onrender.com`. `render.yaml` defines a
+Singapore web service that builds with `npm ci --omit=dev` and runs `npm start`.
+Set `SUPABASE_DB_URL` in the Render dashboard; it is not stored in Git.
+`COOKIE_SECURE=true` requires HTTPS. `/api/health` must report
+`"database":"postgres"`.
+
+The first production deploy failed with `getaddrinfo ENOTFOUND base` because
+`SUPABASE_DB_URL` was not a complete URI. Use the full session-pooler URI
+(`postgresql://...@...pooler.supabase.com:5432/postgres`), never only the
+database name or the direct IPv6-only host.
 
 The free plan sleeps after inactivity, which also pauses the daily scheduler.
 Use the Starter plan for an always-on production service. Render's filesystem is
@@ -278,4 +285,4 @@ Keep these files accurate when behavior changes:
 - `docs/GITHUB_PAGES.md`
 - `docs/TEST_RESULTS.md`
 - `docs/manuals/` (one guide per role; keep permissions and procedures aligned with RBAC and UI)
-- `docs/supabase/README.md`, `docs/supabase/MIGRATION.md`, and `docs/supabase/STEP_BY_STEP.md` (draft Postgres migration; keep the schema, importer, and cutover plan in sync if the data model changes)
+- `docs/supabase/README.md`, `docs/supabase/MIGRATION.md`, and `docs/supabase/STEP_BY_STEP.md` (Postgres architecture, deployment status, and migration runbook; keep the schema, importer, and cutover plan in sync if the data model changes)

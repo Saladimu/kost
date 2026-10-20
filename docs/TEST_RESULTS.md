@@ -98,7 +98,7 @@ Harness runtime Apps Script dan harness frontend dijalankan pada sesi pengembang
 - Prefetch `/dashboard-page` melayani permintaan pertama tanpa pembacaan spreadsheet.
 - Cache GET GAS dan frontend tidak menyajikan data lama setelah operasi tulis.
 - Cache GET frontend bertahan setelah muat ulang halaman melalui `sessionStorage`, dibatasi per token sesi, dan tidak dipakai setelah POST atau login/logout.
-- `public/js/config.js` memilih API Node pada `localhost` dan `*.monkeycode-ai.live`, serta Apps Script pada host publik. Login Owner dengan data demo lokal berhasil.
+- `public/js/config.js` memilih API Node pada `localhost`, `*.monkeycode-ai.live`, dan host non-statis seperti Render, serta Apps Script hanya pada `*.pages.dev` dan `*.github.io`. Login Owner dengan data demo lokal berhasil.
 - Permintaan GET identik yang bersamaan dideduplikasi dan objek cache terisolasi dari mutasi pemanggil.
 
 Hasil: lulus.
@@ -134,7 +134,29 @@ Postgres asli:
 Hasil: lulus (`22 kamar, 17 setting, 7 invoice`; tenant baru bertahan setelah
 restart).
 
-## 10. Catatan
+## 10. Verifikasi produksi Render dan Supabase
+
+Tanggal: 20 Oktober 2026. URL: `https://kelolakos.onrender.com`.
+
+- Deploy Render berhasil; log menampilkan `Database siap (postgres)` dan
+  `Your service is live`.
+- `GET /api/health` mengembalikan HTTP 200 dengan
+  `{"ok":true,"data":{"status":"ok","database":"postgres",...}}`.
+- `GET /api/public-config` mengembalikan nama properti tanpa autentikasi.
+- Login Owner berhasil dan `GET /api/rooms` mengembalikan 21 kamar dari
+  Supabase.
+- Deploy pertama gagal dengan
+  `Gagal menyiapkan database: Error: Skema Supabase tidak dapat dibaca:
+  getaddrinfo ENOTFOUND base`. Penyebabnya nilai `SUPABASE_DB_URL` belum berupa
+  URI lengkap. Setelah URI session pooler diperbaiki di Environment Render,
+  deploy berhasil.
+- `https://kelolakos.pages.dev` tidak diuji sebagai klien Supabase karena host
+  tersebut tetap memakai bridge Apps Script/Google Sheets.
+
+Hasil: lulus. Verifikasi login memakai akun demo; ganti seluruh password demo
+sebelum URL dibagikan.
+
+## 11. Catatan
 
 Pengujian belum mencakup:
 

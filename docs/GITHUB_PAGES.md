@@ -36,7 +36,7 @@ window.KOS_CONFIG = {
 };
 ```
 
-File tersebut memakai API Node lokal pada `localhost` dan `*.monkeycode-ai.live`, serta Apps Script pada host publik. Jangan menghapus pemeriksaan hostname. Jangan memakai URL `/dev`; gunakan URL `/exec` dari deployment.
+File tersebut memakai API Node pada `localhost`, `*.monkeycode-ai.live`, dan host non-statis seperti Render. Apps Script hanya dipakai pada `*.pages.dev` dan `*.github.io`. Jangan menghapus pemeriksaan hostname. Jangan memakai URL `/dev`; gunakan URL `/exec` dari deployment.
 
 ## 3. Aktifkan GitHub Pages
 

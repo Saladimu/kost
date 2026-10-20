@@ -1,7 +1,9 @@
 # Migration plan: JSON / Google Sheets to Supabase Postgres
 
-Status: draft. Do not run against production until the schema, import script,
-and reconciliation queries have been tested on a disposable Supabase project.
+Status: completed for the current dataset (imported from `data/db.json`) and
+deployed on Render at `https://kelolakos.onrender.com`. The schema, importer, and persistence adapter
+are live against Supabase Postgres. Keep this document as the runbook and
+validation checklist for future imports.
 
 ## 1. Source inventory
 

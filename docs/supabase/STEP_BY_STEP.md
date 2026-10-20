@@ -223,9 +223,27 @@ After this, writes from the app are stored in Supabase. Keep these rules:
 - Make changes through the app, not the SQL Editor. Manual changes do not
   bump `id_counters.__data_version` and are invisible until the API restarts.
 - Serve the SPA from the same Node process. The session cookie does not work
-  across origins, so a Cloudflare Pages frontend still uses the Apps Script
-  bridge until a separate cutover.
+  across origins. Cloudflare Pages remains on the Apps Script bridge and is
+  not the Supabase production frontend.
 - The Apps Script backend still uses Google Sheets and is not affected.
+
+### 6.1 Deploy to Render
+
+Production is live at `https://kelolakos.onrender.com` with Supabase Postgres.
+`render.yaml` defines the Singapore web service, the build and start commands,
+the `/api/health` check, and the required environment variables.
+
+1. In Render, create a **Blueprint** from this repository.
+2. Enter `SUPABASE_DB_URL` using the session-pooler URI. Do not use the anon
+   key, the transaction pooler on port 6543, or only the database name.
+3. Keep the other variables from `render.yaml`, including
+   `DB_BACKEND=postgres`, `PGSSLMODE=require`, and `COOKIE_SECURE=true`.
+4. After deploy, open `https://<service>.onrender.com/api/health` and confirm
+   `"database":"postgres"`.
+5. Log in as Owner and change every demo password before sharing the URL.
+
+`https://kelolakos.pages.dev` stays on Apps Script and Google Sheets. Do not
+expect accounts or data from Render to appear there.
 
 ## 7. Common problems
 
@@ -290,6 +308,11 @@ not need `pg`, but the Postgres adapter does.
 The direct host may resolve to IPv6 only on some networks. Use the session
 pooler connection string from **Project Settings > Database** (port 5432)
 instead. Keep the same `SUPABASE_DB_URL` variable.
+
+If the error is `getaddrinfo ENOTFOUND base`, the value is not a complete URI.
+It may contain only the database name. Replace it with the full
+`postgresql://...` session-pooler connection string in Render's **Environment**
+tab, save, and run **Manual Deploy**.
 
 ### The SQL Editor seems stuck
 
