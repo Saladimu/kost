@@ -225,3 +225,4 @@ Keep these files accurate when behavior changes:
 - `docs/GOOGLE_SHEETS.md`
 - `docs/GITHUB_PAGES.md`
 - `docs/TEST_RESULTS.md`
+- `docs/manuals/` (one guide per role; keep permissions and procedures aligned with RBAC and UI)

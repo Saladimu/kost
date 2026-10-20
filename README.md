@@ -98,6 +98,8 @@ Aplikasi juga telah diuji pada peramban DOM (jsdom) untuk seluruh halaman dan in
 - `docs/GOOGLE_SHEETS.md` - persiapan, setup, deployment, dan keamanan Google Sheets.
 - `docs/GITHUB_PAGES.md` - hosting frontend di GitHub Pages dengan bridge Apps Script.
 - `docs/TEST_RESULTS.md` - cakupan dan hasil pengujian.
+- `docs/manuals/README.md` - indeks manual per peran, matriks akses, dan aturan data bersama.
+- `docs/manuals/owner.md`, `manager.md`, `receptionist.md`, `cashier.md`, `operational-staff.md` - panduan operasional masing-masing peran.
 - `AGENTS.md` - konfigurasi, deployment, caching, dan catatan penting untuk agen AI.
 
 ## Google Sheets untuk produksi
