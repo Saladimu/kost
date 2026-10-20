@@ -97,6 +97,7 @@ Harness runtime Apps Script dan harness frontend dijalankan pada sesi pengembang
 - Login mengembalikan `bootstrap` dengan data pengguna.
 - Prefetch `/dashboard-page` melayani permintaan pertama tanpa pembacaan spreadsheet.
 - Cache GET GAS dan frontend tidak menyajikan data lama setelah operasi tulis.
+- Cache GET frontend bertahan setelah muat ulang halaman melalui `sessionStorage`, dibatasi per token sesi, dan tidak dipakai setelah POST atau login/logout.
 - Permintaan GET identik yang bersamaan dideduplikasi dan objek cache terisolasi dari mutasi pemanggil.
 
 Hasil: lulus.

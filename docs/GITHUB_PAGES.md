@@ -50,7 +50,7 @@ URL aplikasi berbentuk `https://<pengguna>.github.io/<repo>/`.
 ## Kinerja
 
 - Setiap panggilan bridge adalah satu request HTTP ke Apps Script. Boot dan login kini hanya memerlukan satu request karena `/bootstrap` dan respons login sudah membawa data pengguna. Bootstrap juga menyiapkan cache data dashboard sehingga halaman pertama tidak memicu tiga request tambahan.
-- Browser menyimpan hasil GET selama 15 detik dan menggabungkan permintaan identik yang berjalan bersamaan.
+- Browser menyimpan hasil GET selama 60 detik di memori dan `sessionStorage`, serta menggabungkan permintaan identik yang berjalan bersamaan. Cache dibatasi per token sesi dan dibersihkan setiap kali ada POST atau login/logout.
 - Backend meng-cache respons GET selama 30 detik per pengguna dan parameter; setiap penulisan otomatis membatalkan cache lama.
 - Latensi pertama tetap bergantung pada Apps Script dan Google Sheets. Gunakan backend Node.js untuk volume data yang jauh lebih besar.
 

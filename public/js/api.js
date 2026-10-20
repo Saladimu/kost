@@ -4,17 +4,63 @@ const API = (() => {
   const TOKEN_KEY = 'kos_gas_token';
   const BRIDGE_CHANNEL = 'kos-bridge';
   const BRIDGE_TIMEOUT = 45000;
-  const GET_TTL = 15000;
+  const GET_TTL = 60000;
+  const CACHE_KEY = 'kos_get_cache_v1';
+  const MAX_CACHE_CHARS = 2000000;
+  const MAX_ENTRY_CHARS = 250000;
   let memoryToken = '';
   const bridgePending = {};
   const getCache = new Map();
   const inflight = new Map();
   let cacheGeneration = 0;
+  let cacheLoaded = false;
+  let cacheKey = '';
+
+  function storageKey() {
+    return `${CACHE_KEY}:${readToken() || 'guest'}`;
+  }
+
+  function loadGetCache() {
+    const key = storageKey();
+    if (cacheLoaded && cacheKey === key) return;
+    cacheLoaded = true;
+    cacheKey = key;
+    getCache.clear();
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const now = Date.now();
+      Object.entries(parsed).forEach(([path, entry]) => {
+        if (entry && entry.expires > now && entry.data !== undefined) getCache.set(path, entry);
+      });
+    } catch (error) { /* ignore unavailable or corrupted cache */ }
+  }
+
+  function saveGetCache() {
+    try {
+      const now = Date.now();
+      const entries = {};
+      let chars = 0;
+      getCache.forEach((entry, path) => {
+        if (!entry || entry.expires <= now) return;
+        const serialized = JSON.stringify(entry);
+        if (serialized.length > MAX_ENTRY_CHARS) return;
+        if (chars + serialized.length > MAX_CACHE_CHARS) return;
+        entries[path] = entry;
+        chars += serialized.length;
+      });
+      sessionStorage.setItem(storageKey(), JSON.stringify(entries));
+    } catch (error) { /* ignore unavailable or full storage */ }
+  }
 
   function clearGetCache() {
     cacheGeneration += 1;
     getCache.clear();
     inflight.clear();
+    cacheLoaded = false;
+    cacheKey = '';
+    try { sessionStorage.removeItem(storageKey()); } catch (error) { /* storage may be unavailable */ }
   }
 
   function clone(value) {
@@ -43,14 +89,14 @@ const API = (() => {
   }
 
   function writeToken(token) {
-    memoryToken = token;
     clearGetCache();
+    memoryToken = token;
     try { sessionStorage.setItem(TOKEN_KEY, token); } catch (error) { /* storage may be unavailable */ }
   }
 
   function clearToken() {
-    memoryToken = '';
     clearGetCache();
+    memoryToken = '';
     try { sessionStorage.removeItem(TOKEN_KEY); } catch (error) { /* storage may be unavailable */ }
   }
 
@@ -205,12 +251,16 @@ const API = (() => {
       if (usable.length) query = `?${new URLSearchParams(usable).toString()}`;
     }
     const fullPath = `${path}${query}`;
+    loadGetCache();
     const cached = getCache.get(fullPath);
     if (cached && cached.expires > Date.now()) return Promise.resolve(clone(cached.data));
     if (inflight.has(fullPath)) return inflight.get(fullPath);
     const generation = cacheGeneration;
     const promise = request(fullPath).then((data) => {
-      if (generation === cacheGeneration) getCache.set(fullPath, { data: clone(data), expires: Date.now() + GET_TTL });
+      if (generation === cacheGeneration) {
+        getCache.set(fullPath, { data: clone(data), expires: Date.now() + GET_TTL });
+        saveGetCache();
+      }
       inflight.delete(fullPath);
       return data;
     }, (error) => {

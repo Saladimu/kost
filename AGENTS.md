@@ -167,7 +167,7 @@ docs/                     Architecture, rules, operations, deployment
 - GAS caches successful GET responses for 30 seconds, keyed by token, path, and query.
 - `src/gas/db.js` bumps `API_CACHE_VERSION` in Script Properties on every save. This invalidates all cached reads.
 - Cached responses over 45,000 characters are skipped.
-- The frontend caches GET responses for 15 seconds, deduplicates identical in-flight requests, and clears its cache on every non-GET request.
+- The frontend caches GET responses for 60 seconds in memory and `sessionStorage`, deduplicates identical in-flight requests, and clears its cache on every non-GET request and on login/logout.
 - `bootstrapPayload_` prefetches the current-month `/dashboard-page` response to avoid extra GAS reads after boot or login.
 - Do not cache non-GET responses. Do not add write-side effects to GET handlers.
 - If you add a new write path that bypasses `DB.save`, you must invalidate the read cache explicitly.
