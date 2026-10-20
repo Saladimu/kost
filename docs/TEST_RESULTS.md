@@ -98,6 +98,7 @@ Harness runtime Apps Script dan harness frontend dijalankan pada sesi pengembang
 - Prefetch `/dashboard-page` melayani permintaan pertama tanpa pembacaan spreadsheet.
 - Cache GET GAS dan frontend tidak menyajikan data lama setelah operasi tulis.
 - Cache GET frontend bertahan setelah muat ulang halaman melalui `sessionStorage`, dibatasi per token sesi, dan tidak dipakai setelah POST atau login/logout.
+- `public/js/config.js` memilih API Node pada `localhost` dan `*.monkeycode-ai.live`, serta Apps Script pada host publik. Login Owner dengan data demo lokal berhasil.
 - Permintaan GET identik yang bersamaan dideduplikasi dan objek cache terisolasi dari mutasi pemanggil.
 
 Hasil: lulus.

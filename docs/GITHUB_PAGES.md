@@ -28,7 +28,7 @@ Pendekatan ini dipakai karena halaman HTML Apps Script berjalan di dalam sandbox
 
 ## 2. Hubungkan frontend
 
-Edit `public/js/config.js`:
+Edit `public/js/config.js` dan ganti `gasBridgeUrl` dengan URL deployment `/exec`:
 
 ```javascript
 window.KOS_CONFIG = {
@@ -36,7 +36,7 @@ window.KOS_CONFIG = {
 };
 ```
 
-Jangan memakai URL `/dev`; gunakan URL `/exec` dari deployment.
+File tersebut memakai API Node lokal pada `localhost` dan `*.monkeycode-ai.live`, serta Apps Script pada host publik. Jangan menghapus pemeriksaan hostname. Jangan memakai URL `/dev`; gunakan URL `/exec` dari deployment.
 
 ## 3. Aktifkan GitHub Pages
 

@@ -114,7 +114,7 @@ Tempel `src/code.gs` dan `src/appsscript.json` ke proyek Apps Script. Jalankan `
 
 ## GitHub Pages + Apps Script
 
-Frontend dapat dihosting sebagai situs statis di GitHub Pages. Isi `public/js/config.js` dengan URL deployment Apps Script:
+Frontend dapat dihosting sebagai situs statis di GitHub Pages. `public/js/config.js` sudah berisi URL deployment Apps Script produksi. Host lokal dan preview `*.monkeycode-ai.live` otomatis memakai API Node dan `data/db.json`, sedangkan host publik memakai Apps Script:
 
 ```javascript
 window.KOS_CONFIG = {
@@ -122,7 +122,7 @@ window.KOS_CONFIG = {
 };
 ```
 
-Aktifkan `Settings > Pages > Source: GitHub Actions`, lalu push ke `main`. Panduan lengkap ada di `docs/GITHUB_PAGES.md`.
+Ganti URL tersebut jika deployment Apps Script berubah. Jangan menghapus pemeriksaan hostname tanpa menyiapkan staging terpisah. Aktifkan `Settings > Pages > Source: GitHub Actions`, lalu push ke `main`. Panduan lengkap ada di `docs/GITHUB_PAGES.md`.
 
 ## Catatan implementasi
 

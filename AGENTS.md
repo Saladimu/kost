@@ -94,11 +94,16 @@ A push to `main` triggers a deployment if the Pages project is connected to the 
 
 ## Critical data note
 
-The committed `public/js/config.js` points to the **production** Apps Script deployment. Because the local preview serves the same frontend files, the preview at `http://localhost:3000` or the MonkeyCode preview URL reads and writes the same Google Sheets data as production.
+`public/js/config.js` selects the backend by hostname:
 
-- Treat preview operations as production operations unless a separate staging deployment is configured.
-- `data/db.json` is a separate local database, but the SPA bypasses it while `gasBridgeUrl` is filled.
-- To isolate staging, create a separate Apps Script deployment and spreadsheet, then point the preview build at that `/exec` URL. Do not change production `config.js` casually.
+- `localhost`, `127.0.0.1`, `::1`, and `*.monkeycode-ai.live` use the same-origin Node API and the local `data/db.json`.
+- Everything else, including Cloudflare Pages, GitHub Pages, and the Apps Script Web App, uses the **production** Apps Script deployment.
+
+This keeps local and MonkeyCode previews isolated from production Google Sheets data. Production changes still require manual Apps Script redeployment.
+
+- Treat public deployments as production operations.
+- Do not remove the hostname check without a separate staging deployment.
+- To test against production GAS from a local host, temporarily fill `gasBridgeUrl` in the browser config or add an explicit staging switch.
 
 ## Architecture and file map
 
@@ -211,8 +216,8 @@ Frontend changes deploy through Cloudflare Pages after a push. Backend changes r
 - Changing the bootstrap payload in one backend only; update `src/api.js` and `src/gas/router.js`.
 - Adding a collection without updating `TABS`, `HEADERS`, and `emptyDb_` in `src/gas/db.js`.
 - Enabling dashboard prefetch for a user without checking permissions; use `can()`.
-- Testing destructive operations on the local preview while it points at production Apps Script.
-- Assuming preview data is isolated. It is not, unless staging is configured.
+- Assuming public deployments are isolated from production Apps Script data.
+- Pointing a local host at production without understanding the hostname switch in `public/js/config.js`.
 
 ## Documentation
 

@@ -40,7 +40,7 @@ function buildFrontend() {
   const css = fs.readFileSync(path.join(ROOT, 'public', 'css', 'styles.css'), 'utf8');
   html = html.replace('<link rel="stylesheet" href="css/styles.css">', `<style>\n${css}\n</style>`);
   html = html.replace(/<script src="([^"]+)"><\/script>/g, (match, src) => {
-    const relative = src.replace(/^\//, '');
+    const relative = src.replace(/^\//, '').split(/[?#]/)[0];
     const file = path.join(ROOT, 'public', relative);
     if (!fs.existsSync(file)) throw new Error(`Aset frontend tidak ditemukan: ${src}`);
     const script = fs.readFileSync(file, 'utf8').replace(/<\/script/gi, '<\\/script');
