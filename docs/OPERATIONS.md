@@ -64,6 +64,18 @@ Catatan:
 - Setelah impor ulang, server yang berjalan akan memuat snapshot baru pada request berikutnya.
 - Jangan mematikan `PG_ADVISORY_LOCK` di produksi; kunci ini mencegah dua instance menulis bersamaan.
 - Gunakan `PGSSLMODE=disable` hanya untuk Postgres lokal.
+- Jika host langsung hanya memiliki IPv6 dan koneksi gagal dengan `ENETUNREACH`, gunakan session pooler (port 5432) dari **Connect** di dashboard Supabase.
+
+### 1.2 Produksi di Render
+
+`render.yaml` menyiapkan satu layanan web Node di region Singapura.
+
+1. Buat **Blueprint** di Render dari repositori ini.
+2. Isi `SUPABASE_DB_URL` dengan connection string session pooler. Variabel lain sudah diatur di blueprint.
+3. Setelah deploy, buka `/api/health`; hasilnya harus `"database":"postgres"`.
+4. Login sebagai Owner dan ganti seluruh password akun demo sebelum URL dibagikan.
+5. Plan gratis berhenti saat tidak aktif dan menjeda scheduler. Gunakan plan Starter untuk produksi selalu aktif.
+6. Filesystem Render sementara. Unduh `data/backups/` atau andalkan backup/PITR Supabase.
 
 ## 2. Alur kerja harian
 
@@ -89,11 +101,21 @@ curl -X POST http://localhost:3000/api/system/backup \
   -H "Cookie: <cookie-sesi>"
 ```
 
-Backup harian dijalankan scheduler ke `data/backups/`. Berkas backup adalah salinan JSON basis data. Pada mode Postgres, endpoint backup menulis ekspor JSON logis ke `data/backups/supabase-*.json`. Untuk pemulihan bencana, tetap andalkan backup/PITR Supabase; ekspor JSON bukan pengganti `pg_dump`.
+Backup manual pada mode Postgres:
+
+```bash
+set -a
+. ./.env
+set +a
+npm run export:supabase
+```
+
+Perintah ini menulis ekspor JSON logis ke `data/backups/supabase-*.json`. Endpoint `POST /api/system/backup` melakukan hal yang sama. Scheduler Node hanya menjalankan tagihan dan penagihan; scheduler tidak membuat backup harian.
 
 Praktik yang disarankan:
 
-- Salin `data/backups/` ke penyimpanan lain setiap hari.
+- Aktifkan backup otomatis atau PITR pada project Supabase. Plan gratis tidak menyediakan backup.
+- Salin `data/backups/` ke penyimpanan lain segera setelah dibuat. Filesystem Render bersifat sementara.
 - Simpan minimal 30 backup harian dan 12 backup bulanan.
 - Uji pemulihan secara berkala pada lingkungan terpisah.
 - Jangan mengedit `data/db.json` saat server berjalan.
@@ -172,12 +194,14 @@ Ubah melalui menu Pengaturan sebagai Owner. Perubahan berlaku untuk proses berik
 
 ## 9. Batasan dan rekomendasi produksi
 
-Implementasi ini menggunakan Node.js dan berkas JSON transaksional karena lingkungan tidak menyediakan Google Apps Script dan Google Sheets.
+Produksi memakai layanan Node di Render dengan Supabase Postgres. Mode JSON dan Apps Script tetap tersedia untuk pengembangan dan fallback.
 
-- Satu proses server mengasumsikan satu penulis basis data. Lock internal mencegah penulisan bersamaan, tetapi bukan pengganti basis data relasional.
-- Skala nyata 21-100 kamar sebaiknya memakai PostgreSQL atau MySQL, backup otomatis, serta pemantauan.
-- Sesi disimpan di memori proses. Restart server akan mengeluarkan semua pengguna.
-- Scheduler berjalan di dalam proses. Untuk produksi, gunakan cron eksternal atau job runner yang idempoten.
+- Gunakan satu instance web. Advisory lock melindungi penulisan lintas instance, tetapi sesi disimpan di memori proses; beberapa instance memerlukan sticky session atau penyimpanan sesi bersama.
+- Restart atau deploy akan mengeluarkan semua pengguna. Ini dapat diterima, tetapi jadwalkan di luar jam operasional.
+- Scheduler berjalan di dalam proses Node. Plan gratis Render dapat menjeda scheduler; gunakan plan Starter atau picu job dari luar.
+- Aktifkan backup/PITR Supabase. Ekspor JSON dari aplikasi bukan pengganti `pg_dump` atau PITR.
+- Ganti semua password demo dan nonaktifkan akun yang tidak dipakai sebelum membagikan URL produksi.
+- Pantau `/api/health`, ukuran database, dan koneksi pool. Naikkan `PG_POOL_MAX` hanya setelah menghitung batas koneksi Supabase.
 - Berkas backup berada pada disk yang sama. Salin ke lokasi terpisah.
 - Gunakan HTTPS melalui reverse proxy tepercaya, batasi akses jaringan, dan ganti seluruh akun demo.
 - Uji restore, rekonsiliasi, dan alur check-out pada lingkungan staging sebelum go-live.

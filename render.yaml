@@ -1,0 +1,29 @@
+# Free plan sleeps after inactivity, so the daily scheduler is not reliable.
+# Upgrade the service to the Starter plan for always-on billing jobs.
+services:
+  - type: web
+    name: kelolakos
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DB_BACKEND
+        value: postgres
+      - key: SUPABASE_DB_URL
+        sync: false
+      - key: PGSSLMODE
+        value: require
+      - key: PG_ADVISORY_LOCK
+        value: "true"
+      - key: PG_POOL_MAX
+        value: "5"
+      - key: COOKIE_SECURE
+        value: "true"

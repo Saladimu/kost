@@ -7,8 +7,10 @@
     || host === '::1'
     || host === '[::1]'
     || /(^|\.)monkeycode-ai\.live$/.test(host);
+  const staticHost = /(^|\.)pages\.dev$/.test(host) || /(^|\.)github\.io$/.test(host);
+  const useNodeApi = localPreview || !staticHost;
 
   window.KOS_CONFIG = {
-    gasBridgeUrl: localPreview ? '' : 'https://script.google.com/macros/s/AKfycbyqxmkMpqAp2ZvTROe2BQbL0rC5bYt_OtYkaeTSVYZN8hkrBqkAzntXJBpIUDslw-cbng/exec'
+    gasBridgeUrl: useNodeApi ? '' : 'https://script.google.com/macros/s/AKfycbyqxmkMpqAp2ZvTROe2BQbL0rC5bYt_OtYkaeTSVYZN8hkrBqkAzntXJBpIUDslw-cbng/exec'
   };
 })();

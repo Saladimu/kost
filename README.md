@@ -46,7 +46,7 @@ Untuk memakai Supabase, lihat bagian [Supabase sebagai database](#supabase-sebag
 - Laporan keuangan, harian, hunian, kartu penghuni, rekonsiliasi, dan jejak audit.
 - Ekspor CSV dan dokumen cetak untuk invoice, kuitansi, dan laporan.
 - Kontrol akses berbasis peran yang ditegakkan di server.
-- Backend Google Apps Script siap tempel dengan Google Sheets sebagai database produksi.
+- Backend Google Apps Script siap tempel dengan Google Sheets sebagai opsi legacy.
 
 ## Struktur proyek
 
@@ -131,7 +131,7 @@ Tempel `src/code.gs` dan `src/appsscript.json` ke proyek Apps Script. Jalankan `
 
 ## GitHub Pages + Apps Script
 
-Frontend dapat dihosting sebagai situs statis di GitHub Pages. `public/js/config.js` sudah berisi URL deployment Apps Script produksi. Host lokal dan preview `*.monkeycode-ai.live` otomatis memakai API Node dan `data/db.json`, sedangkan host publik memakai Apps Script:
+Frontend dapat dihosting sebagai situs statis di GitHub Pages. `public/js/config.js` sudah berisi URL deployment Apps Script produksi. Hanya `*.pages.dev` dan `*.github.io` yang memakai Apps Script; host Node seperti Render memakai API same-origin:
 
 ```javascript
 window.KOS_CONFIG = {
@@ -167,10 +167,26 @@ Catatan penting:
 
 - Semua penulisan harus melalui API. Perubahan langsung di SQL Editor tidak menaikkan `__data_version`, sehingga instance yang sedang berjalan tidak melihatnya sampai restart.
 - Impor ulang menaikkan `__data_version`; instance yang berjalan akan memuat ulang snapshot pada request berikutnya.
-- Backup dari menu Sistem menulis ekspor JSON logis ke `data/backups/`. Untuk pemulihan bencana, tetap gunakan backup Supabase.
+- Backup dari menu Sistem atau `npm run export:supabase` menulis ekspor JSON logis ke `data/backups/`. Untuk pemulihan bencana, tetap gunakan backup Supabase/PITR.
 - RLS aktif tanpa policy. Hanya role pemilik tabel (connection string `postgres`) yang dapat membaca/menulis.
 - Sajikan SPA dari proses Node yang sama (`npm start`) agar cookie sesi tetap same-origin. Frontend di Cloudflare Pages masih memakai bridge Apps Script sampai cutover; lihat catatan deployment di `docs/supabase/README.md`.
 - Tempatkan API sedekat mungkin dengan database; setiap request melakukan satu query versi ke Postgres.
+
+## Render untuk produksi
+
+Repositori menyertakan `render.yaml` untuk layanan web Node di region Singapura. Render membangun dengan `npm ci --omit=dev`, menjalankan `npm start`, dan memeriksa `/api/health`.
+
+1. Buat **Blueprint** baru di Render dari repositori GitHub ini.
+2. Saat Render meminta `SUPABASE_DB_URL`, isi connection string **session pooler** (port 5432) yang dipakai `.env` lokal. Jangan memakai anon key atau transaction pooler 6543.
+3. Pastikan variabel lain sesuai `render.yaml`: `DB_BACKEND=postgres`, `PGSSLMODE=require`, `PG_ADVISORY_LOCK=true`, `COOKIE_SECURE=true`.
+4. Tunggu deploy, lalu buka `https://<service>.onrender.com/api/health`. Nilainya harus `"database":"postgres"`.
+5. Login sebagai Owner, segera ganti seluruh password akun demo melalui menu Pengguna, lalu bagikan URL produksi.
+
+Catatan operasional:
+
+- Plan gratis tidur setelah tidak aktif dan menjeda scheduler harian. Gunakan plan Starter untuk layanan selalu aktif.
+- Filesystem Render bersifat sementara. Salin `data/backups/` keluar dari host, atau aktifkan backup/PITR Supabase.
+- Satu instance Node cukup. Jika memakai lebih dari satu instance, sesi in-memory akan tersebar; gunakan sticky session atau pindahkan sesi ke penyimpanan bersama.
 
 Panduan lengkap: `docs/supabase/README.md`, `docs/supabase/MIGRATION.md`, dan `docs/supabase/STEP_BY_STEP.md`.
 

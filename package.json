@@ -11,7 +11,8 @@
     "test:pg": "node tests/pg-store.test.js && node tests/pg-http.test.js",
     "build:gas": "node scripts/build-gas.js",
     "import:supabase": "node scripts/import-supabase.js",
-    "check:supabase": "node scripts/check-supabase.js"
+    "check:supabase": "node scripts/check-supabase.js",
+    "export:supabase": "node scripts/export-supabase.js"
   },
   "engines": {
     "node": ">=18"

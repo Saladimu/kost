@@ -21,6 +21,7 @@ npm run test:pg
 npm run build:gas
 npm run import:supabase
 npm run check:supabase
+npm run export:supabase
 ```
 
 - `npm start` runs the local server on port 3000.
@@ -29,6 +30,7 @@ npm run check:supabase
 - `npm run build:gas` regenerates `src/code.gs` from `src/gas/*.js`, `src/services/*.js`, and the files in `public/`.
 - `npm run import:supabase` generates `data/supabase-import.sql` from `data/db.json`. It does not change the running backend.
 - `npm run check:supabase` validates the configured database: table counts, cache version, invoice balance, and duplicate active occupancies.
+- `npm run export:supabase` writes a logical JSON backup of the Postgres database under `data/backups/`.
 
 Useful overrides:
 
@@ -66,6 +68,7 @@ Add `npm run test:pg` whenever `src/pg/`, `src/db.js`, `server.js`, `src/bootstr
 | `PG_ADVISORY_LOCK` | `true` | Cross-instance write lock; keep enabled in production |
 | `PGSSLMODE` | `require` for remote hosts | Set `disable` for local Postgres |
 | `PG_POOL_MAX` | `5` | Maximum Postgres pool connections |
+| `COOKIE_SECURE` | `false` | Set `true` on HTTPS hosts to add `Secure` to the session cookie and enable HSTS |
 
 `data/db.json`, `data/backups/`, `data/supabase-import.sql`, and the import report are ignored by Git. They are local runtime state.
 
@@ -96,14 +99,26 @@ Transport priority in `public/js/api.js`:
 2. If `gasBridgeUrl` is set, use the form-POST bridge to the Web App.
 3. Otherwise use the same-origin Node API at `/api`.
 
-### Cloudflare Pages
+### Render (production Node + Supabase)
+
+`render.yaml` defines a Singapore web service that builds with `npm ci --omit=dev`
+and runs `npm start`. Set `SUPABASE_DB_URL` in the Render dashboard; it is not
+stored in Git. `COOKIE_SECURE=true` requires HTTPS.
+
+The free plan sleeps after inactivity, which also pauses the daily scheduler.
+Use the Starter plan for an always-on production service. Render's filesystem is
+ephemeral, so `data/backups/` must be copied off-host or replaced by Supabase
+backups/PITR.
+
+### Cloudflare Pages (legacy static frontend)
 
 - Project: `kelolakos`
 - Production URL: `https://kelolakos.pages.dev/`
 - Build command: none
 - Build output directory: `public`
 
-A push to `main` triggers a deployment if the Pages project is connected to the repository.
+Pages serves only static files and uses the Apps Script bridge. A push to
+`main` triggers a deployment if the Pages project is connected to the repository.
 
 ### GitHub Pages
 
@@ -113,14 +128,18 @@ A push to `main` triggers a deployment if the Pages project is connected to the 
 
 `public/js/config.js` selects the backend by hostname:
 
-- `localhost`, `127.0.0.1`, `::1`, and `*.monkeycode-ai.live` use the same-origin Node API and the local `data/db.json`.
-- Everything else, including Cloudflare Pages, GitHub Pages, and the Apps Script Web App, uses the **production** Apps Script deployment.
+- `localhost`, `127.0.0.1`, `::1`, and `*.monkeycode-ai.live` use the same-origin Node API. Without a database URL that is `data/db.json`; with `SUPABASE_DB_URL` it is Postgres.
+- Any other host uses the same-origin Node API, including Render and a custom domain pointed at Render.
+- Only `*.pages.dev` and `*.github.io` use the **production** Apps Script bridge, because those hosts cannot run Node.
 
-This keeps local and MonkeyCode previews isolated from production Google Sheets data. Production changes still require manual Apps Script redeployment.
+Production is the Render Node service backed by Supabase. Cloudflare Pages and
+GitHub Pages remain static Apps Script clients. If a custom domain is attached to
+Cloudflare Pages, add it to `staticHost` in `public/js/config.js`; otherwise it
+will try the same-origin Node API.
 
 - Treat public deployments as production operations.
-- Do not remove the hostname check without a separate staging deployment.
-- To test against production GAS from a local host, temporarily fill `gasBridgeUrl` in the browser config or add an explicit staging switch.
+- Do not point a local test host at the production Supabase database without a separate staging project.
+- Production changes to the Apps Script backend still require manual redeployment.
 
 ## Architecture and file map
 

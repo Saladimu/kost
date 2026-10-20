@@ -100,13 +100,15 @@ verification path. Do not import GAS hashes as if they were scrypt hashes.
 
 ## Deployment note
 
-The public SPA currently chooses the Apps Script bridge on non-local hosts. To
-run against this Node API in production, serve `public/` from the same Node
-process (`server.js`) on the Node host. That keeps session cookies same-origin
-and requires no CORS changes.
+`public/js/config.js` uses the Apps Script bridge only on `*.pages.dev` and
+`*.github.io`. Every other host uses the same-origin Node API. Production runs
+`server.js` on Render with `SUPABASE_DB_URL` set; `render.yaml` defines the
+service, build command, health check, and required variables. Serving the SPA
+from the same Node process keeps session cookies same-origin and requires no
+CORS changes.
 
-Using Cloudflare Pages as the SPA host with the Node API on another origin is
-not supported yet: the session cookie is `SameSite=Lax`, so it is not sent on
+Using Cloudflare Pages or a custom static host as the SPA origin with the Node
+API on another origin is not supported yet: the session cookie is `SameSite=Lax`, so it is not sent on
 cross-site requests. That setup needs an API base URL, CORS, and a Bearer-token
 flow before it can replace the Apps Script bridge.
 

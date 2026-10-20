@@ -129,12 +129,16 @@ function sessionUser(db, req) {
   };
 }
 
+function secureFlag() {
+  return process.env.COOKIE_SECURE === 'true' ? '; Secure' : '';
+}
+
 function setSessionCookie(res, token) {
-  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`);
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax${secureFlag()}; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`);
 }
 
 function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`);
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax${secureFlag()}; Max-Age=0`);
 }
 
 module.exports = {
