@@ -9,3 +9,6 @@ data/backups/
 
 *.swp
 .env.sw?
+data/gas-import.json
+data/gas-import-report.json
+data/gas-import-credentials.json

@@ -182,7 +182,29 @@ Backup berada di Drive akun pemilik deployment. Pindahkan salinan ke penyimpanan
 
 Password pada versi Apps Script memakai iterasi SHA-256 dengan salt. Password hash dari versi Node.js memakai scrypt dan tidak dapat diverifikasi oleh Apps Script. Bila memindahkan data dari versi Node.js, reset password setiap pengguna.
 
-## 8. Batas dan pertimbangan produksi
+## 8. Impor data dari versi Node/JSON
+
+Alur ini memindahkan data demo dari `data/db.json` ke spreadsheet Apps Script. Impor mengganti seluruh isi tab, bukan menggabungkan data.
+
+1. Hentikan server lokal agar tidak ada penulisan selama ekspor.
+2. Jalankan `npm run export:gas`.
+3. Periksa `data/gas-import-report.json`. Lanjutkan hanya bila `ok: true` dan `errors` kosong. Ekspor memvalidasi ID ganda, referensi, saldo invoice, hunian aktif ganda, dan `meta.counters`.
+4. Unggah `data/gas-import.json` ke Google Drive pribadi. Jangan bagikan tautannya.
+5. Tempel `src/code.gs` terbaru ke editor Apps Script, lalu simpan. Fungsi `importKosJson` hanya tersedia pada bundel terbaru.
+6. Buka spreadsheet tujuan. Bila `SPREADSHEET_ID` belum diatur, jalankan `setup()` sekali agar spreadsheet dibuat; data demo hasil setup akan diganti.
+7. Di editor Apps Script, jalankan `importKosJson('<FILE_ID>', 'GANTI_DATA')`. Ganti `<FILE_ID>` dengan ID berkas Drive. Konfirmasi `GANTI_DATA` mencegah eksekusi tidak sengaja.
+8. Periksa log eksekusi. Jumlah baris setiap koleksi harus sama dengan laporan ekspor; importer juga memeriksa ulang saldo invoice dan hunian aktif ganda sebelum menulis.
+9. Login memakai kredensial di `data/gas-import-credentials.json`. Berkas ini berisi password sementara karena hash Node (scrypt) tidak dapat dipakai Apps Script. Setelah semua akun direset, hapus berkas kredensial dan berkas JSON dari Drive.
+10. Deploy ulang Web App dengan versi baru. Cloudflare Pages memakai bridge Apps Script, jadi `public/js/config.js` tidak perlu diubah selama URL deployment tetap.
+
+Catatan:
+
+- Impor bersifat mengganti. Jangan jalankan pada spreadsheet produksi yang sedang dipakai.
+- Backup spreadsheet sebelum impor.
+- Untuk data besar, impor dapat melewati batas eksekusi 6 menit; bagi per koleksi atau gunakan spreadsheet baru.
+- Importer tidak memasang trigger. Trigger harian dari `setup()` tetap berlaku.
+
+## 9. Batas dan pertimbangan produksi
 
 - Google Apps Script memiliki batas waktu eksekusi. Operasi normal untuk 21-100 kamar berada jauh di bawah batas, tetapi impor data besar harus dipecah.
 - Setiap request masih membaca tab yang dibutuhkan saat cache kosong. Volume besar dan riwayat audit panjang akan memperlambat operasi pertama.
@@ -195,7 +217,7 @@ Password pada versi Apps Script memakai iterasi SHA-256 dengan salt. Password ha
 - Google Sheets bukan basis data relasional. Gunakan versi Node.js dengan PostgreSQL/MySQL bila volume transaksi, jumlah pengguna, atau kebutuhan audit tumbuh signifikan.
 - Backup harian berada di Drive yang sama. Salin ke lokasi terpisah untuk pemulihan bencana.
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 ### `SPREADSHEET_ID belum diatur`
 

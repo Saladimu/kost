@@ -22,15 +22,17 @@ npm run build:gas
 npm run import:supabase
 npm run check:supabase
 npm run export:supabase
+npm run export:gas
 ```
 
 - `npm start` runs the local server on port 3000.
-- `npm test` runs the end-to-end acceptance suite against a temporary JSON database.
+- `npm test` runs the JSON export validation and the end-to-end acceptance suite against a temporary JSON database.
 - `npm run test:pg` runs the Postgres adapter and HTTP integration tests against embedded PGlite. It requires devDependencies (`npm install`).
 - `npm run build:gas` regenerates `src/code.gs` from `src/gas/*.js`, `src/services/*.js`, and the files in `public/`.
 - `npm run import:supabase` generates `data/supabase-import.sql` from `data/db.json`. It does not change the running backend.
 - `npm run check:supabase` validates the configured database: table counts, cache version, invoice balance, and duplicate active occupancies.
 - `npm run export:supabase` writes a logical JSON backup of the Postgres database under `data/backups/`.
+- `npm run export:gas` writes `data/gas-import.json`, a validation report, and temporary credentials for importing JSON data into Apps Script/Google Sheets.
 
 Useful overrides:
 
@@ -183,6 +185,7 @@ public/
   js/app.js               Boot, login, routing, shell
   js/pages/*.js           Page renderers
 scripts/build-gas.js      GAS bundler
+scripts/export-gas.js     JSON to Apps Script/Sheets exporter
 scripts/import-supabase.js Supabase SQL importer
 tests/acceptance.test.js  End-to-end acceptance tests
 docs/                     Architecture, rules, operations, deployment

@@ -1,6 +1,6 @@
 # Hasil Pengujian
 
-Tanggal verifikasi: 20 Oktober 2026.
+Tanggal verifikasi: 21 Oktober 2026.
 
 ## 1. Uji acceptance end-to-end
 
@@ -121,7 +121,19 @@ dijalankan pada PostgreSQL lokal berbasis PGlite:
 
 Hasil: lulus.
 
-## 9. Verifikasi adaptor Postgres
+## 9. Verifikasi ekspor Google Sheets
+
+`npm test` menjalankan `tests/export-gas.test.js` sebelum acceptance. Cakupan:
+
+- konversi pengguna demo ke hash `sha256$800$...` yang dapat diverifikasi Apps Script, serta pembuatan password sementara untuk hash scrypt yang tidak dikenal;
+- deteksi ID ganda, referensi hilang, saldo invoice tidak konsisten, hunian aktif ganda, dan `meta.counters` hilang;
+- `npm run export:gas` menghasilkan `data/gas-import.json`, laporan validasi, dan kredensial mode 0600.
+
+Importer Apps Script `importKosJson(fileId, 'GANTI_DATA')` memvalidasi ulang jumlah baris, saldo invoice, dan hunian aktif ganda. Jalankan pada spreadsheet uji sebelum showcase; harness otomatis belum mengeksekusi runtime Apps Script.
+
+Hasil: lulus pada data demo lokal.
+
+## 10. Verifikasi adaptor Postgres
 
 `npm run test:pg` menjalankan dua uji terhadap PGlite melalui protokol wire
 Postgres asli:
@@ -138,7 +150,7 @@ Postgres asli:
 Hasil: lulus (`22 kamar, 17 setting, 7 invoice`; tenant baru bertahan setelah
 restart).
 
-## 10. Verifikasi produksi Render dan Supabase
+## 11. Verifikasi produksi Render dan Supabase
 
 Tanggal: 20 Oktober 2026. URL: `https://kelolakos.onrender.com`.
 
@@ -160,7 +172,7 @@ Tanggal: 20 Oktober 2026. URL: `https://kelolakos.onrender.com`.
 Hasil: lulus. Verifikasi login memakai akun demo; ganti seluruh password demo
 sebelum URL dibagikan.
 
-## 11. Catatan
+## 12. Catatan
 
 Pengujian belum mencakup:
 

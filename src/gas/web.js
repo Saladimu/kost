@@ -119,6 +119,96 @@ function setupProduction() {
   ].join('\n');
 }
 
+function importKosJson(fileId, confirmation) {
+  if (String(confirmation || '') !== 'GANTI_DATA') {
+    throw new Error("Konfirmasi wajib: importKosJson('<FILE_ID>', 'GANTI_DATA').");
+  }
+  const id = String(fileId || '').trim();
+  if (!id) throw new Error('FILE_ID Google Drive belum diisi.');
+
+  let text;
+  try {
+    text = DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8');
+  } catch (error) {
+    throw new Error(`Berkas Drive tidak dapat dibaca: ${error.message}`);
+  }
+  if (text.length > 5 * 1024 * 1024) throw new Error('Berkas impor melebihi 5 MB.');
+
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch (error) {
+    throw new Error(`JSON tidak valid: ${error.message}`);
+  }
+  if (!payload || payload.format !== 'kos-json-export' || payload.version !== 1 || !payload.db) {
+    throw new Error('Format berkas bukan ekspor kos-json-export versi 1.');
+  }
+
+  const dbApi = __require('db');
+  const target = dbApi.load({ seed: false });
+  const collections = Object.keys(target).filter((key) => Array.isArray(target[key]));
+  const incoming = payload.db;
+
+  Object.keys(incoming).forEach((key) => {
+    if (key !== 'meta' && collections.indexOf(key) < 0) throw new Error(`Koleksi tidak dikenal: ${key}`);
+  });
+  collections.forEach((key) => {
+    if (!Array.isArray(incoming[key])) throw new Error(`Koleksi ${key} tidak ada di berkas impor.`);
+  });
+  if (!incoming.meta || typeof incoming.meta !== 'object' || !incoming.meta.counters) {
+    throw new Error('meta atau meta.counters tidak ada di berkas impor.');
+  }
+  if (!Array.isArray(incoming.users) || !incoming.users.length) {
+    throw new Error('Berkas impor tidak memiliki pengguna.');
+  }
+  incoming.users.forEach((user) => {
+    if (String(user.PasswordHash || '').indexOf('sha256$') !== 0) {
+      throw new Error(`PasswordHash ${user.Email || user.UserID || ''} bukan format Apps Script.`);
+    }
+  });
+
+  const errors = [];
+  (incoming.invoices || []).forEach((invoice) => {
+    const expected = Number(invoice.TotalAmount || 0) - Number(invoice.AmountPaid || 0);
+    const actual = Number(invoice.OutstandingBalance || 0);
+    if (!Number.isFinite(expected) || !Number.isFinite(actual) || Math.abs(expected - actual) > 0.01) {
+      errors.push(`Invoice ${invoice.InvoiceID} memiliki saldo yang tidak konsisten.`);
+    }
+  });
+  const activeRooms = {};
+  const activeTenants = {};
+  (incoming.occupancies || []).filter((row) => row.AgreementStatus === 'Active').forEach((row) => {
+    if (activeRooms[row.RoomID]) errors.push(`Kamar ${row.RoomID} memiliki lebih dari satu hunian aktif.`);
+    else activeRooms[row.RoomID] = row.OccupancyID;
+    if (activeTenants[row.TenantID]) errors.push(`Penghuni ${row.TenantID} memiliki lebih dari satu hunian aktif.`);
+    else activeTenants[row.TenantID] = row.OccupancyID;
+  });
+  if (errors.length) throw new Error(`Validasi gagal: ${errors.slice(0, 5).join(' ')}`);
+
+  target.meta = incoming.meta;
+  collections.forEach((key) => {
+    target[key] = incoming[key];
+  });
+  dbApi.save(target);
+
+  const check = dbApi.load({ seed: false });
+  const summary = [];
+  collections.forEach((key) => {
+    if (check[key].length !== incoming[key].length) {
+      throw new Error(`Jumlah baris ${key} tidak cocok setelah impor.`);
+    }
+    summary.push(`${key}=${check[key].length}`);
+  });
+
+  const message = [
+    'Impor selesai dan terverifikasi.',
+    `Baris: ${summary.join(', ')}`,
+    'Uji login, lalu hapus berkas JSON dari Google Drive.',
+  ].join('\n');
+  Logger.log(message);
+  return message;
+}
+
 function health() {
   return { status: 'ok', configured: __require('db').isConfigured(), time: new Date().toISOString() };
 }

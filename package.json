@@ -7,12 +7,13 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node tests/acceptance.test.js",
+    "test": "node tests/export-gas.test.js && node tests/acceptance.test.js",
     "test:pg": "node tests/pg-store.test.js && node tests/pg-http.test.js",
     "build:gas": "node scripts/build-gas.js",
     "import:supabase": "node scripts/import-supabase.js",
     "check:supabase": "node scripts/check-supabase.js",
-    "export:supabase": "node scripts/export-supabase.js"
+    "export:supabase": "node scripts/export-supabase.js",
+    "export:gas": "node scripts/export-gas.js"
   },
   "engines": {
     "node": ">=18"
