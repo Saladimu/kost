@@ -83,11 +83,21 @@ Verifikasi produksi:
 curl -sS https://kelolakos.onrender.com/api/health
 ```
 
-Hasil yang diharapkan: `{"ok":true,"data":{"status":"ok","database":"postgres",...}}`. Login Owner dan `GET /api/rooms` pada URL tersebut juga sudah diverifikasi dan mengembalikan 21 kamar.
+Hasil yang diharapkan: `{"ok":true,"data":{"status":"ok","database":"postgres","storage":"Postgres-db",...}}`. Login Owner dan `GET /api/rooms` pada URL tersebut juga sudah diverifikasi dan mengembalikan 21 kamar.
 
 Alamat `https://kelolakos.pages.dev` bukan produksi Supabase. Host `*.pages.dev` memakai bridge Apps Script dan Google Sheets, sehingga akun serta datanya terpisah. Gunakan hanya URL Render untuk data Supabase.
 
 Jika deploy pertama gagal dengan `getaddrinfo ENOTFOUND base`, nilai `SUPABASE_DB_URL` belum berupa URI lengkap. Perbaiki di tab **Environment**, simpan, lalu jalankan **Manual Deploy**.
+
+### 1.3 Indikator status koneksi
+
+Sidebar menampilkan titik status di samping label penyimpanan:
+
+- Hijau: `GET /api/health` berhasil. Pada mode Postgres, health menjalankan `select 1` ke database; pada mode JSON, health memeriksa file database.
+- Kuning: pemeriksaan sedang berjalan atau backend belum dikonfigurasi.
+- Merah: health gagal, timeout, atau browser sedang offline.
+
+Frontend memeriksa health saat login, setiap 120 detik saat tab aktif, saat tab kembali terlihat, dan saat event `online`/`offline`. Tooltip menampilkan backend aktif: `Google Sheets`, `Postgres-db`, atau `JSON local`. Health yang gagal mengembalikan HTTP 503 dengan kode `UNHEALTHY`.
 
 ## 2. Alur kerja harian
 

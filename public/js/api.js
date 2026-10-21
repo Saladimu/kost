@@ -275,6 +275,7 @@ const API = (() => {
 
   return {
     get,
+    health: () => request('/health'),
     hasToken: () => !!readToken(),
     post: (path, body) => request(path, { method: 'POST', body: body || {} }),
     login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),

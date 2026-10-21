@@ -20,6 +20,18 @@ Dokumen ini adalah kumpulan panduan operasional untuk setiap peran di Sistem Ope
 4. Menu di sidebar hanya muncul sesuai izin peran. Jika sebuah menu tidak terlihat, peran tersebut memang tidak memiliki akses.
 5. Semua nominal dalam Rupiah. Tanggal operasional mengikuti zona waktu `Asia/Jakarta`.
 
+## Status koneksi di sidebar
+
+Titik di samping label penyimpanan menunjukkan status koneksi aplikasi:
+
+| Warna | Arti |
+| --- | --- |
+| Hijau | Terhubung ke backend dan pemeriksaan kesehatan berhasil |
+| Kuning | Sedang memeriksa koneksi, backend belum dikonfigurasi, atau respons tidak normal |
+| Merah | Tidak dapat menjangkau backend atau sedang offline |
+
+Arahkan kursor ke titik untuk melihat keterangan dan nama backend: `Google Sheets`, `Postgres-db`, atau `JSON local`. Pemeriksaan berjalan saat login, setiap dua menit, saat tab kembali aktif, dan saat status jaringan berubah. Titik hijau berarti pemeriksaan kesehatan berhasil, bukan jaminan bahwa setiap operasi tulis akan berhasil.
+
 ## Matriks akses aktual
 
 Keterangan: `R` baca, `T` tulis/ubah, `-` tidak ada akses. `T` pada tugas berarti hanya tugas milik sendiri.

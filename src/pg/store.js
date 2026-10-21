@@ -322,9 +322,14 @@ function createStore({ driver, advisoryLock = true, seedDemo = false }) {
     return snapshot;
   }
 
+  async function ping() {
+    await driver.query('select 1');
+  }
+
   return {
     init,
     sync,
+    ping,
     withLock: write,
     snapshot: () => snapshot,
     version: () => version,

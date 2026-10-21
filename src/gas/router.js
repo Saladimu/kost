@@ -21,6 +21,7 @@ function bootstrapPayload_(db, user, services, token) {
   const { can } = services.auth;
   const payload = {
     user,
+    storage: 'Google Sheets',
     property: {
       name: services.common.getSetting(db, 'PropertyName', 'Kos'),
       address: services.common.getSetting(db, 'PropertyAddress', ''),
@@ -149,7 +150,9 @@ function handleApi_(token, method, path, q, body) {
     jobs: __require('jobs'),
   };
 
-  if (path === '/api/health') return ok_({ status: 'ok', time: new Date().toISOString() });
+  if (path === '/api/health') {
+    return ok_({ status: 'ok', storage: 'Google Sheets', configured: DB.isConfigured(), time: new Date().toISOString() });
+  }
 
   if (path === '/api/auth/login' && method === 'POST') {
     const db = DB.load();

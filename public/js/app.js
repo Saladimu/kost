@@ -80,6 +80,7 @@
   }
 
   function showLogin() {
+    App.stopStatusMonitor();
     document.getElementById('boot-screen').classList.add('hidden');
     document.getElementById('app').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');

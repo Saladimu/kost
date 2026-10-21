@@ -109,10 +109,12 @@ async function main() {
     app = await startApp(port, dbUrl);
     const health = await call(base, 'GET', '/health');
     assert.equal(health.payload.data.database, 'postgres');
+    assert.equal(health.payload.data.storage, 'Postgres-db');
 
     const login = await call(base, 'POST', '/auth/login', { email: 'owner@kos.id', password: 'owner123' });
     const cookie = login.cookie.split(';')[0];
     assert.equal(login.payload.data.user.Role, 'Owner');
+    assert.equal(login.payload.data.bootstrap.storage, 'Postgres-db');
 
     const rooms = await fetch(`${base}/api/rooms`, { headers: { Cookie: cookie } }).then((res) => res.json());
     assert.equal(rooms.data.length, 21);

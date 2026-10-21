@@ -42,6 +42,7 @@ Untuk memakai Supabase, lihat bagian [Supabase sebagai database](#supabase-sebag
 - Order layanan dengan harga tersimpan saat transaksi, penagihan langsung atau lewat invoice.
 - Pengeluaran operasional dengan alur pending, approved, paid, dan pembatalan.
 - Ledger transaksi kas masuk dan keluar serta kewajiban deposit.
+- Indikator status koneksi backend di sidebar: hijau terhubung, kuning memeriksa, merah tidak terhubung.
 - Tugas kebersihan, perawatan, inspeksi, dan keamanan untuk staf operasional.
 - Laporan keuangan, harian, hunian, kartu penghuni, rekonsiliasi, dan jejak audit.
 - Ekspor CSV dan dokumen cetak untuk invoice, kuitansi, dan laporan.

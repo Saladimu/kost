@@ -74,6 +74,8 @@ async function main() {
   await waitForServer();
   const health = await request('GET', '/health');
   assert.equal(health.status, 'ok');
+  assert.equal(health.database, 'json');
+  assert.equal(health.storage, 'JSON local');
 
   const badHostStatus = await rawRequest('/api/health', { Host: '[' });
   assert.equal(badHostStatus, 200, 'Host header tidak valid tidak boleh menghentikan server.');
@@ -90,6 +92,9 @@ async function main() {
 
   const me = await request('GET', '/auth/me');
   assert.equal(me.user.Role, 'Owner');
+
+  const bootstrap = await request('GET', '/bootstrap');
+  assert.equal(bootstrap.storage, 'JSON local');
 
   const dashboardPage = await request('GET', '/dashboard-page');
   assert.ok(dashboardPage.dashboard, 'Dashboard page harus memuat ringkasan.');

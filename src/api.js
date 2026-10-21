@@ -1,7 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { load, sync, isPostgres } = require('./db');
+const { load, sync, healthCheck, isPostgres } = require('./db');
 const { guard, can, sessionUser, login, logout, setSessionCookie, clearSessionCookie } = require('./auth');
 const { AppError, today, cleanText } = require('./util');
 const { getSetting } = require('./services/common');
@@ -48,6 +48,7 @@ function requestId(req) {
 function bootstrapPayload(db, user) {
   return {
     user,
+    storage: isPostgres() ? 'Postgres-db' : 'JSON local',
     property: {
       name: getSetting(db, 'PropertyName', 'Kos'),
       address: getSetting(db, 'PropertyAddress', ''),
@@ -79,7 +80,19 @@ async function handle(req, res, url) {
     body = await readBody(req);
   }
 
-  if (path === '/api/health') return ok(res, { status: 'ok', database: isPostgres() ? 'postgres' : 'json', time: new Date().toISOString() });
+  if (path === '/api/health') {
+    try {
+      const database = await healthCheck();
+      return ok(res, {
+        status: 'ok',
+        database,
+        storage: database === 'postgres' ? 'Postgres-db' : 'JSON local',
+        time: new Date().toISOString(),
+      });
+    } catch (error) {
+      return fail(res, new AppError('Database tidak dapat dijangkau.', 503, 'UNHEALTHY'));
+    }
+  }
 
   await sync();
   const db = load();

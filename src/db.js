@@ -46,6 +46,16 @@ async function sync() {
   return cache;
 }
 
+async function healthCheck() {
+  if (!isPostgres()) {
+    await fs.promises.access(DB_PATH, fs.constants.R_OK | fs.constants.W_OK);
+    return 'json';
+  }
+  if (!store) await init();
+  await store.ping();
+  return 'postgres';
+}
+
 function emptyDb() {
   return {
     meta: { schemaVersion: 1, createdAt: nowISO(), updatedAt: nowISO(), counters: {}, demoPaymentsSeeded: false },
@@ -150,4 +160,4 @@ function resetCacheForTests() {
   initPromise = null;
 }
 
-module.exports = { DB_PATH, load, save, withLock, init, sync, isPostgres, resetCacheForTests };
+module.exports = { DB_PATH, load, save, withLock, init, sync, healthCheck, isPostgres, resetCacheForTests };

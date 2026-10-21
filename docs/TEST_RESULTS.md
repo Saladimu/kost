@@ -97,6 +97,8 @@ Harness runtime Apps Script dan harness frontend dijalankan pada sesi pengembang
 - `GET /api/public-config` dapat diakses tanpa login dan hanya mengembalikan nama properti.
 - Nama properti pada layar login mengikuti `PropertyName` dan berubah setelah pengaturan disimpan.
 - Login mengembalikan `bootstrap` dengan data pengguna.
+- `/api/health` mengembalikan `database` dan `storage`; acceptance memeriksa `JSON local`, uji HTTP Postgres memeriksa `Postgres-db`.
+- `bootstrap.storage` mengembalikan `JSON local` pada backend JSON, `Postgres-db` pada Postgres, dan `Google Sheets` pada Apps Script; sidebar menampilkan nilai tersebut.
 - Prefetch `/dashboard-page` melayani permintaan pertama tanpa pembacaan spreadsheet.
 - Cache GET GAS dan frontend tidak menyajikan data lama setelah operasi tulis.
 - Cache GET frontend bertahan setelah muat ulang halaman melalui `sessionStorage`, dibatasi per token sesi, dan tidak dipakai setelah POST atau login/logout.
