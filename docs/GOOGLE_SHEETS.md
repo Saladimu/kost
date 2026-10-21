@@ -201,6 +201,7 @@ Catatan:
 
 - Impor bersifat mengganti. Jangan jalankan pada spreadsheet produksi yang sedang dipakai.
 - Backup spreadsheet sebelum impor.
+- Impor memakai Script Property `SPREADSHEET_ID` pada proyek Apps Script yang sedang dibuka. Proyek itu harus sama dengan proyek yang melayani URL `/exec` di `public/js/config.js`. Jika berbeda, data masuk ke spreadsheet lain. Log impor menampilkan URL spreadsheet dan `PropertyName`; bandingkan dengan respons `?route=/api/public-config` pada Web App.
 - Untuk data besar, impor dapat melewati batas eksekusi 6 menit; bagi per koleksi atau gunakan spreadsheet baru.
 - Importer tidak memasang trigger. Trigger harian dari `setup()` tetap berlaku.
 
@@ -230,6 +231,16 @@ Spreadsheet belum terhubung. Jalankan setup dari editor Apps Script, lalu deploy
 ### Login gagal setelah memindahkan data lama
 
 Hash password Node.js tidak kompatibel. Reset password pengguna melalui menu Staf atau buat pengguna baru.
+
+### Impor sukses tetapi aplikasi masih menampilkan data demo dan login gagal
+
+Web App membaca spreadsheet lain. Impor hanya menulis ke `SPREADSHEET_ID` proyek Apps Script yang menjalankan impor. Periksa:
+
+1. URL spreadsheet pada log impor dan nilai `PropertyName` di dalamnya.
+2. `?route=/api/public-config` pada URL `/exec` yang dipakai `public/js/config.js`.
+3. Script Property `SPREADSHEET_ID` pada proyek deployment.
+
+Jika `PropertyName` berbeda, samakan `SPREADSHEET_ID` proyek deployment dengan spreadsheet hasil impor, atau jalankan ulang impor di proyek deployment. Perubahan Script Property berlaku tanpa deploy ulang.
 
 ### Perubahan kode tidak muncul
 

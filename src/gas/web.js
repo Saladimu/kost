@@ -200,9 +200,28 @@ function importKosJson(fileId, confirmation) {
     summary.push(`${key}=${check[key].length}`);
   });
 
+  const properties = PropertiesService.getScriptProperties();
+  let spreadsheetId = properties.getProperty('SPREADSHEET_ID');
+  if (!spreadsheetId) {
+    try {
+      const active = SpreadsheetApp.getActiveSpreadsheet();
+      if (active) spreadsheetId = active.getId();
+    } catch (error) {
+      spreadsheetId = '';
+    }
+  }
+  const spreadsheetUrl = spreadsheetId
+    ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`
+    : '(tidak diketahui)';
+  const propertyNameRow = (check.settings || []).find((row) => row.SettingKey === 'PropertyName');
+  const propertyName = propertyNameRow ? propertyNameRow.SettingValue : '(tidak ada)';
+
   const message = [
     'Impor selesai dan terverifikasi.',
+    `Spreadsheet: ${spreadsheetUrl}`,
+    `PropertyName: ${propertyName}`,
     `Baris: ${summary.join(', ')}`,
+    'Pastikan /api/public-config Web App menampilkan PropertyName yang sama.',
     'Uji login, lalu hapus berkas JSON dari Google Drive.',
   ].join('\n');
   Logger.log(message);
