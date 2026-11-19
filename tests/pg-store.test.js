@@ -72,7 +72,7 @@ async function main() {
   const db = store.snapshot();
 
   assert.equal(db.rooms.length, 21);
-  assert.equal(db.settings.length, 17);
+  assert.equal(db.settings.length, 18);
   assert.equal(db.users.length, 5);
   assert.equal(db.invoices.length, billing.billingCount);
   assert.ok(db.meta.demoPaymentsSeeded, 'Data impor tidak boleh memicu seed demo.');

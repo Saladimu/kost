@@ -22,7 +22,7 @@ Server adalah satu-satunya sumber kebenaran. Klien tidak pernah menghitung saldo
 | `src/pg/store.js` | Snapshot Postgres, diff baris, transaksi, advisory lock |
 | `src/pg/driver.js` | Pool `pg` dan konfigurasi SSL |
 | `src/bootstrap.js` | Inisialisasi basis data, seeding demo, rekonsiliasi awal |
-| `src/jobs.js` | Tagihan harian, overdue, backup, scheduler 6 jam |
+| `src/jobs.js` | Tagihan harian, overdue, backup (dengan `BackupEnabled`), scheduler 6 jam |
 | `src/seed.js` | Skema dan data contoh |
 | `src/util.js` | Tanggal, validasi, ID, jumlah uang, enum |
 
@@ -180,7 +180,7 @@ Rute hash yang tersedia mencakup dashboard, rooms, room-types, tenants, reservat
 - password berbasis iterasi SHA-256 dengan salt;
 - router API yang sama dengan versi Node.js;
 - antarmuka SPA yang disisipkan langsung ke HTML output;
-- trigger harian untuk tagihan, overdue, rekonsiliasi, dan backup Drive.
+- trigger harian untuk tagihan, overdue, rekonsiliasi, dan backup Drive (dengan `BackupEnabled=true`).
 
 Bundel dibangun dari `src/gas/`, `src/services/`, `src/util.js`, `src/seed.js`, `src/bootstrap.js`, dan aset `public/` melalui `npm run build:gas`. Sumber Node.js tetap menjadi acuan logika bisnis.
 

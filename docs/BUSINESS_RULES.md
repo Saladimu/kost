@@ -124,5 +124,5 @@ Bila ragu, server menolak akses dengan kode `FORBIDDEN`.
 
 - Scheduler membuat tagihan yang jatuh pada periode berjalan.
 - Scheduler memperbarui status overdue dan menerapkan denda bila diaktifkan.
-- Scheduler menjalankan backup harian ke `data/backups/`.
-- Semua proses otomatis memakai pengguna sistem `SYSTEM` pada audit.
+- Scheduler menjalankan backup harian ke `data/backups/` bila `BackupEnabled=true`.
+- Semua proses otomatis memakai pengguna sistem `SYSTEM` pada audit."

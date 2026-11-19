@@ -1,6 +1,6 @@
 # Hasil Pengujian
 
-Tanggal verifikasi: 21 Oktober 2026.
+Tanggal verifikasi: 21 Oktober 2026 (diperbarui 19 November 2026).
 
 ## 1. Uji acceptance end-to-end
 
@@ -32,7 +32,10 @@ Cakupan:
 - laporan;
 - jejak audit;
 - penolakan akses peran;
-- validasi berkas backup.
+- validasi berkas backup;
+- setting `BackupEnabled` default `true`, auto-run backup ada di folder backups,
+  dan menyetel `BackupEnabled=false` menghentikan backup baru tanpa mengganggu
+  tagihan harian;
 
 Uji menggunakan basis data sementara melalui `DB_PATH` dan port acak sehingga data pengembangan tidak berubah.
 
@@ -147,7 +150,7 @@ Postgres asli:
   Owner, membaca 21 kamar, membuat penghuni, mematikan server, menyalakan
   ulang, lalu memastikan penghuni dan versi data bertahan.
 
-Hasil: lulus (`22 kamar, 17 setting, 7 invoice`; tenant baru bertahan setelah
+Hasil: lulus (`22 kamar, 18 setting, 7 invoice`; tenant baru bertahan setelah
 restart).
 
 ## 11. Verifikasi produksi Render dan Supabase

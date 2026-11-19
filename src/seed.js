@@ -54,6 +54,7 @@ function buildSeed(db) {
     ['ProrateMidMonth', 'false', 'Kebijakan prorata untuk check-in/check-out di tengah bulan'],
     ['LateFeeEnabled', 'false', 'Denda keterlambatan hanya aktif jika owner mengaktifkan'],
     ['LateFeePercent', '0', 'Persentase denda keterlambatan (jika diaktifkan)'],
+    ['BackupEnabled', 'true', 'Apakah backup harian otomatis dijalankan oleh trigger dailyJobs'],
     ['DepositPolicy', 'Deposit dikembalikan setelah inspeksi kamar dan pelunasan tagihan.'],
     ['BillingPolicy', 'Sewa dibebankan penuh per periode bulanan sejak tanggal check-in. Tanggal 29-31 mengikuti hari terakhir bulan.'],
     ['PaymentPolicy', 'Kelebihan pembayaran dicatat sebagai kredit penghuni dan dapat dialokasikan ke invoice berikutnya.'],

@@ -5,7 +5,7 @@ const path = require('path');
 const { today, nowISO, addDays } = require('./util');
 const { generateMonthlyInvoices, updateOverdueInvoices } = require('./services/billing');
 const { reconcile } = require('./services/reports');
-const { getNumberSetting, audit } = require('./services/common');
+const { getNumberSetting, getSetting, audit } = require('./services/common');
 const { DB_PATH } = require('./db');
 
 let lastAutoRun = '';
@@ -37,6 +37,9 @@ function autoRun(db, save) {
   lastAutoRun = day;
   const result = runBillingJobs(db, { asOf: day, user: 'SYSTEM' });
   audit(db, { user: 'SYSTEM', action: 'AUTO_BILLING', module: 'Automation', recordId: 'DAILY_JOB', next: JSON.stringify({ created: result.billing.count, overdue: result.overdue }) });
+  if (getSetting(db, 'BackupEnabled', 'true') !== 'false') {
+    backupDatabase(db);
+  }
   save(db);
 }
 

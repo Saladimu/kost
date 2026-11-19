@@ -165,6 +165,10 @@ Setiap hari trigger:
 
 Backup berada di Drive akun pemilik deployment. Pindahkan salinan ke penyimpanan lain secara berkala. Tetapkan retensi, misalnya 30 backup harian dan 12 backup bulanan. Aplikasi tidak menghapus backup otomatis.
 
+### Mengaktifkan dan menonaktifkan backup otomatis
+
+Prosedur backup harian dikendalikan oleh pengaturan `BackupEnabled` pada tab `Settings`. Nilai default adalah `true`, jadi backup otomatis berjalan setiap hari. Untuk menonaktifkannya sementara, ubah `BackupEnabled` menjadi `false` melalui menu Pengaturan (hanya Owner/Manager yang dapat mengubahnya). Ketika `BackupEnabled` bernilai `false`, trigger `dailyJobs` tetap menjalankan tagihan dan rekonsiliasi, tetapi tidak membuat salinan spreadsheet. Setelah selesai, kembalikan nilai ke `true` untuk mengaktifkannya kembali. Perubahan ini berlaku tanpa deploy ulang.
+
 ## 7. Keamanan
 
 - Ganti seluruh password akun demo sebelum dipakai.

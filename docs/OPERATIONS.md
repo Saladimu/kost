@@ -132,7 +132,7 @@ set +a
 npm run export:supabase
 ```
 
-Perintah ini menulis ekspor JSON logis ke `data/backups/supabase-*.json`. Endpoint `POST /api/system/backup` melakukan hal yang sama. Scheduler Node hanya menjalankan tagihan dan penagihan; scheduler tidak membuat backup harian.
+Perintah ini menulis ekspor JSON logis ke `data/backups/supabase-*.json`. Endpoint `POST /api/system/backup` melakukan hal yang sama. Scheduler Node menjalankan tagihan, overdue, dan rekonsiliasi setiap hari; backup otomatis hanya dibuat jika `BackupEnabled` diatur ke `true` (bawaan). Gunakan `POST /api/system/backup` atau `npm run export:supabase` untuk backup manual.
 
 Praktik yang disarankan:
 
@@ -161,8 +161,9 @@ Praktik yang disarankan:
 | `LateFeePercent` | Persentase denda | 0 |
 | `InvoicePrefix` | Prefiks nomor invoice | INV |
 | `ReceiptPrefix` | Prefiks nomor kuitansi | KWT |
+| `BackupEnabled` | Apakah backup harian otomatis dijalankan | true |
 
-Ubah melalui menu Pengaturan sebagai Owner. Perubahan berlaku untuk proses berikutnya dan tidak mengubah dokumen lama.
+Ubah melalui menu Pengaturan sebagai Owner. Perubahan berlaku untuk proses berikutnya dan tidak mengubah dokumen lama. Setel `BackupEnabled` ke `false` untuk menonaktifkan sementara backup harian; kembalikan ke `true` setelah selesai. Pada mode Node, scheduler tidak membuat backup harian secara otomatis; gunakan `POST /api/system/backup` atau `npm run export:supabase`.
 
 ## 7. Peran pengguna
 

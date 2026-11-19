@@ -336,6 +336,22 @@ async function main() {
   assert.ok(backupData.invoices.length > 0);
   assert.ok(backupData.deposits.length > 0);
 
+  const settings = await request('GET', '/settings');
+  const backupSetting = settings.find((s) => s.SettingKey === 'BackupEnabled');
+  assert.ok(backupSetting, 'Setting BackupEnabled harus ada.');
+  assert.equal(backupSetting.SettingValue, 'true', 'BackupEnabled default true.');
+
+  const backupsBefore = fs.readdirSync(path.join(dir, 'backups')).filter((f) => f.startsWith('db-'));
+  assert.ok(backupsBefore.length >= 1, 'Auto-run backup harus ada di folder backups.');
+
+  await request('POST', '/settings', { settings: { BackupEnabled: 'false' } });
+  const settingsAfter = await request('GET', '/settings');
+  const backupSettingAfter = settingsAfter.find((s) => s.SettingKey === 'BackupEnabled');
+  assert.equal(backupSettingAfter.SettingValue, 'false', 'BackupEnabled harus bisa dimatikan.');
+
+  const backupsAfterDisable = fs.readdirSync(path.join(dir, 'backups')).filter((f) => f.startsWith('db-'));
+  assert.equal(backupsAfterDisable.length, backupsBefore.length, 'Nonaktifkan BackupEnabled tidak boleh membuat backup baru.');
+
   console.log('Acceptance test lulus: alur check-in, tagihan, pembayaran sebagian, layanan, pengeluaran, check-out, dan rekonsiliasi.');
 }
 
