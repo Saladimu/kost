@@ -37,8 +37,12 @@ function dataUri(relative, mime) {
 function buildFrontend() {
   const indexPath = path.join(ROOT, 'public', 'index.html');
   let html = fs.readFileSync(indexPath, 'utf8');
-  const css = fs.readFileSync(path.join(ROOT, 'public', 'css', 'styles.css'), 'utf8');
-  html = html.replace('<link rel="stylesheet" href="css/styles.css">', `<style>\n${css}\n</style>`);
+  html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g, (match, href) => {
+    const relative = href.replace(/^\//, '').split(/[?#]/)[0];
+    const file = path.join(ROOT, 'public', relative);
+    if (!fs.existsSync(file)) throw new Error(`Aset frontend tidak ditemukan: ${href}`);
+    return `<style>\n${fs.readFileSync(file, 'utf8')}\n</style>`;
+  });
   html = html.replace(/<script src="([^"]+)"><\/script>/g, (match, src) => {
     const relative = src.replace(/^\//, '').split(/[?#]/)[0];
     const file = path.join(ROOT, 'public', relative);
@@ -52,6 +56,9 @@ function buildFrontend() {
     'assets/apple-touch-icon.png': dataUri('assets/apple-touch-icon.png', 'image/png'),
   };
   Object.keys(assets).forEach((asset) => { html = html.split(asset).join(assets[asset]); });
+  if (/<(link rel="stylesheet"|script src=)/.test(html)) {
+    throw new Error('Bundel GAS masih memuat aset eksternal; inlining frontend gagal.');
+  }
   return html;
 }
 
