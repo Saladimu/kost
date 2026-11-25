@@ -124,8 +124,12 @@ async function renderSettings(container, initialTab = 'general') {
     return `<label class="field"><span>${UI.esc(label)}</span><input type="${type}" name="${key}" value="${value}" ${disabled} ${extra}></label>`;
   }
 
+  function isTrue(key, fallback = 'false') {
+    return String(setting(key, fallback)).trim().toLowerCase() === 'true';
+  }
+
   function selectField(key, label, options, editable) {
-    const current = setting(key, 'false');
+    const current = setting(key, 'false').trim().toLowerCase();
     return `<label class="field"><span>${UI.esc(label)}</span><select name="${key}" ${editable ? '' : 'disabled'}>${options.map(([value, text]) => `<option value="${value}" ${current === value ? 'selected' : ''}>${UI.esc(text)}</option>`).join('')}</select></label>`;
   }
 
@@ -184,10 +188,10 @@ async function renderSettings(container, initialTab = 'general') {
         </div></div>
         <div class="card"><div class="card-head"><h3>Kebijakan operasional</h3></div><div class="card-body">
           <div class="report-row"><span>Zona waktu</span><span>${UI.esc(setting('Timezone', 'Asia/Jakarta'))}</span></div>
-          <div class="report-row"><span>Prorata</span><span>${setting('ProrateMidMonth') === 'true' ? 'Aktif' : 'Tidak aktif'}</span></div>
-          <div class="report-row"><span>Denda keterlambatan</span><span>${setting('LateFeeEnabled') === 'true' ? `${setting('LateFeePercent')}%` : 'Tidak aktif'}</span></div>
+          <div class="report-row"><span>Prorata</span><span>${isTrue('ProrateMidMonth') ? 'Aktif' : 'Tidak aktif'}</span></div>
+          <div class="report-row"><span>Denda keterlambatan</span><span>${isTrue('LateFeeEnabled') ? `${setting('LateFeePercent')}%` : 'Tidak aktif'}</span></div>
           <div class="report-row"><span>Jatuh tempo</span><span>${UI.esc(setting('DefaultDueDays', '5'))} hari</span></div>
-          <div class="report-row"><span>Backup harian</span><span>${String(setting('BackupEnabled', 'true')).toLowerCase() === 'true' ? 'Aktif' : 'Tidak aktif'}</span></div>
+          <div class="report-row"><span>Backup harian</span><span>${isTrue('BackupEnabled', 'true') ? 'Aktif' : 'Tidak aktif'}</span></div>
         </div></div>
       </div>
       <div class="card mt-16"><div class="card-head"><h3>Log sistem</h3></div><div class="table-wrap"><table class="data"><thead><tr><th>Waktu</th><th>Level</th><th>Sumber</th><th>Pesan</th></tr></thead><tbody>
