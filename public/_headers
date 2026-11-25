@@ -3,13 +3,7 @@
   Cache-Control: public, max-age=0, must-revalidate
 
 /
-  Cache-Control: no-cache, must-revalidate
+  Cache-Control: no-cache
 
 /index.html
-  Cache-Control: no-cache, must-revalidate
-
-/js/*
-  Cache-Control: public, max-age=0, must-revalidate
-
-/css/*
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: no-cache
