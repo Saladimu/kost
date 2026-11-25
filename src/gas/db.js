@@ -96,12 +96,19 @@ function ensureSheet_(spreadsheet, name, headers) {
 function valueForSheet_(value) {
   if (value === null || value === undefined) return '';
   if (value instanceof Date) return Utilities.formatDate(value, TIMEZONE, 'yyyy-MM-dd');
+  if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
   if (typeof value === 'object') {
     const text = JSON.stringify(value);
     return text.length > 49000 ? text.slice(0, 49000) : text;
   }
   if (typeof value === 'string' && value.length > 49000) return value.slice(0, 49000);
   return value;
+}
+
+// Sheets returns typed booleans for TRUE/FALSE cells; app rows compare against the strings 'TRUE'/'FALSE'.
+function readCell_(value) {
+  if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
+  return valueForSheet_(value);
 }
 
 function readRows_(sheet) {
@@ -115,7 +122,7 @@ function readRows_(sheet) {
     for (let columnIndex = 0; columnIndex < headers.length; columnIndex += 1) {
       const header = headers[columnIndex];
       if (!header) continue;
-      const value = valueForSheet_(values[rowIndex][columnIndex]);
+      const value = readCell_(values[rowIndex][columnIndex]);
       row[header] = value;
       if (value !== '' && value !== null) hasValue = true;
     }

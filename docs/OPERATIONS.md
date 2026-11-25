@@ -163,7 +163,7 @@ Praktik yang disarankan:
 | `ReceiptPrefix` | Prefiks nomor kuitansi | KWT |
 | `BackupEnabled` | Apakah backup harian otomatis dijalankan | true |
 
-Ubah melalui menu Pengaturan sebagai Owner. Perubahan berlaku untuk proses berikutnya dan tidak mengubah dokumen lama. Setel `BackupEnabled` ke `false` untuk menonaktifkan sementara backup harian; kembalikan ke `true` setelah selesai. Pada mode Node, scheduler tidak membuat backup harian secara otomatis; gunakan `POST /api/system/backup` atau `npm run export:supabase`.
+Ubah melalui menu Pengaturan sebagai Owner. Perubahan berlaku untuk proses berikutnya dan tidak mengubah dokumen lama. Setel `BackupEnabled` ke `false` untuk menonaktifkan sementara backup harian; kembalikan ke `true` setelah selesai. Pada mode Node, scheduler harian juga menghormati `BackupEnabled`: saat `false`, tagihan, overdue, dan rekonsiliasi tetap berjalan tanpa membuat berkas di `data/backups/`. Backup manual selalu tersedia melalui `POST /api/system/backup` atau `npm run export:supabase`.
 
 ## 7. Peran pengguna
 

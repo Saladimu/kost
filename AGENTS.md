@@ -277,6 +277,8 @@ Frontend changes deploy through Cloudflare Pages after a push. Backend changes r
 - Calling `DB.save()` in Postgres mode. Use `withLock()`; the adapter reloads, diffs, and commits rows.
 - Changing the Postgres schema without updating `src/pg/schema.js` and the importer column lists.
 - Assuming `npm test` exercises Postgres. It does not; use `npm run test:pg`.
+- Comparing boolean settings with `getSetting(...) === 'true'`. Google Sheets returns typed booleans for TRUE/FALSE cells, so a cell typed `false` is `false`, not `'false'`, and string comparison silently fails. Always use `getBooleanSetting(db, key, fallback)`.
+- Adding a new setting without updating `KNOWN_SETTINGS` in `src/services/masters.js`, so existing spreadsheets cannot persist it from the UI.
 
 ## Documentation
 

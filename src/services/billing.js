@@ -4,11 +4,11 @@ const {
   today, nowISO, addDays, addMonthsClamped, daysBetween, monthEnd, makeId, makeInvoiceNumber,
   AppError, requireDate, requireAmount, cleanText,
 } = require('../util');
-const { audit, getNumberSetting, getSetting, findById } = require('./common');
+const { audit, getBooleanSetting, getNumberSetting, getSetting, findById } = require('./common');
 
 function proratedRental(db, occupancy, periodStart, periodEnd) {
   const price = Number(occupancy.AgreedMonthlyPrice);
-  if (getSetting(db, 'ProrateMidMonth', 'false') !== 'true') return price;
+  if (!getBooleanSetting(db, 'ProrateMidMonth', false)) return price;
   const naturalEnd = addDays(addMonthsClamped(periodStart, 1), -1);
   const checkIn = occupancy.CheckInDate > periodStart ? occupancy.CheckInDate : periodStart;
   let checkOut = periodEnd < naturalEnd ? periodEnd : naturalEnd;
@@ -152,7 +152,7 @@ function generateMonthlyInvoices(db, { asOf = today(), user = 'SYSTEM' } = {}) {
     const existing = db.invoices
       .filter((invoice) => invoice.OccupancyID === occupancy.OccupancyID)
       .sort((a, b) => a.PeriodStart.localeCompare(b.PeriodStart));
-    const prorate = getSetting(db, 'ProrateMidMonth', 'false') === 'true';
+    const prorate = getBooleanSetting(db, 'ProrateMidMonth', false);
     const hardEnd = occupancy.ActualCheckOut || occupancy.PlannedCheckOut || '';
     let firstPeriodEnd = '';
     if (!existing.length && prorate && occupancy.CheckInDate.slice(8, 10) !== '01') {
@@ -191,7 +191,7 @@ function generateMonthlyInvoices(db, { asOf = today(), user = 'SYSTEM' } = {}) {
 
 function updateOverdueInvoices(db, { asOf = today(), user = 'SYSTEM' } = {}) {
   const changed = [];
-  const lateFeeEnabled = getSetting(db, 'LateFeeEnabled', 'false') === 'true';
+  const lateFeeEnabled = getBooleanSetting(db, 'LateFeeEnabled', false);
   const lateFeePercent = getNumberSetting(db, 'LateFeePercent', 0);
   for (const invoice of db.invoices) {
     if (invoice.InvoiceStatus === 'Cancelled') continue;

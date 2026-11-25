@@ -13,7 +13,9 @@ function getNumberSetting(db, key, fallback = 0) {
 }
 
 function getBooleanSetting(db, key, fallback = false) {
-  const value = String(getSetting(db, key, fallback)).toLowerCase();
+  const raw = getSetting(db, key, fallback);
+  const value = String(raw === null || raw === undefined ? '' : raw).trim().toLowerCase();
+  if (!value) return fallback;
   return value === 'true' || value === '1' || value === 'yes';
 }
 

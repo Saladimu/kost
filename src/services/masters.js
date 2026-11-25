@@ -5,6 +5,13 @@ const { audit, setSetting, findById } = require('./common');
 
 const PRICE_CATEGORIES = ['Room Rental', 'Laundry', 'Cleaning', 'Parking', 'Utilities', 'Other Services'];
 
+const KNOWN_SETTINGS = [
+  'PropertyName', 'PropertyAddress', 'PropertyPhone', 'Currency', 'Timezone',
+  'InvoicePrefix', 'ReceiptPrefix', 'DefaultDueDays', 'BillingAdvanceDays',
+  'ReminderIntervalDays', 'ProrateMidMonth', 'LateFeeEnabled', 'LateFeePercent',
+  'BackupEnabled', 'DepositPolicy', 'BillingPolicy', 'PaymentPolicy', 'CompanyFooter',
+];
+
 function listSettings(db) {
   return db.settings.slice().sort((a, b) => a.SettingKey.localeCompare(b.SettingKey));
 }
@@ -13,7 +20,7 @@ function saveSettings(db, updates, user) {
   if (!updates || typeof updates !== 'object') throw new AppError('Data pengaturan tidak valid.');
   const allowed = new Set(db.settings.map((s) => s.SettingKey));
   for (const [key, value] of Object.entries(updates)) {
-    if (!allowed.has(key)) continue;
+    if (!allowed.has(key) && !KNOWN_SETTINGS.includes(key)) continue;
     setSetting(db, key, value, user.StaffID || 'SYSTEM');
   }
   audit(db, { user: user.StaffID, action: 'UPDATE_SETTINGS', module: 'Settings', recordId: 'SETTINGS', next: JSON.stringify(updates) });

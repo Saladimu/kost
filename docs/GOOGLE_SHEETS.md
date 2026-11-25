@@ -169,6 +169,12 @@ Backup berada di Drive akun pemilik deployment. Pindahkan salinan ke penyimpanan
 
 Prosedur backup harian dikendalikan oleh pengaturan `BackupEnabled` pada tab `Settings`. Nilai default adalah `true`, jadi backup otomatis berjalan setiap hari. Untuk menonaktifkannya sementara, ubah `BackupEnabled` menjadi `false` melalui menu Pengaturan (hanya Owner/Manager yang dapat mengubahnya). Ketika `BackupEnabled` bernilai `false`, trigger `dailyJobs` tetap menjalankan tagihan dan rekonsiliasi, tetapi tidak membuat salinan spreadsheet. Setelah selesai, kembalikan nilai ke `true` untuk mengaktifkannya kembali. Perubahan ini berlaku tanpa deploy ulang.
 
+Pengaturan ini sudah tersedia di menu Pengaturan untuk basis data baru. Pada spreadsheet yang dibuat sebelum pengaturan ini ada, tambahkan satu baris pada tab `Settings` dengan `SettingKey` = `BackupEnabled` dan `SettingValue` = `true` atau `false`. Setelah baris itu ada, nilainya dapat diubah dari menu Pengaturan seperti pengaturan lain.
+
+Nilai sel boleh diketik sebagai teks `true`/`false` atau dibiarkan sebagai boolean Sheets. Aplikasi menormalkan kedua bentuk, jadi `FALSE`, `false`, dan boolean `FALSE` semuanya diperlakukan sama. Ini penting karena Google Sheets menyimpan ketikan `false` sebagai boolean, bukan teks.
+
+Mematikan `BackupEnabled` hanya menghentikan salinan otomatis baru. Berkas backup yang sudah ada di Drive tidak dihapus, dan tombol Backup sekarang pada menu Sistem tetap berfungsi untuk backup manual.
+
 ## 7. Keamanan
 
 - Ganti seluruh password akun demo sebelum dipakai.

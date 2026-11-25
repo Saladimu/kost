@@ -1,7 +1,7 @@
 'use strict';
 
 const { today } = require('./util');
-const { getSetting } = require('./services/common');
+const { getBooleanSetting } = require('./services/common');
 const { generateMonthlyInvoices, updateOverdueInvoices } = require('./services/billing');
 const { reconcile } = require('./services/reports');
 const { audit } = require('./services/common');
@@ -33,7 +33,7 @@ function dailyJobs() {
       recordId: 'DAILY_JOB',
       next: JSON.stringify({ created: result.billing.count, overdue: result.overdue }),
     });
-    if (getSetting(db, 'BackupEnabled', 'true') !== 'false') {
+    if (getBooleanSetting(db, 'BackupEnabled', true)) {
       backupDatabase();
     }
     return result;

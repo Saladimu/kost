@@ -34,7 +34,8 @@ async function renderSettings(container, initialTab = 'general') {
 
   function setting(key, fallback = '') {
     const found = state.settings.find((s) => s.SettingKey === key);
-    return found ? found.SettingValue : fallback;
+    if (!found) return fallback;
+    return found.SettingValue === null || found.SettingValue === undefined ? fallback : String(found.SettingValue);
   }
 
   function render() {
@@ -92,6 +93,7 @@ async function renderSettings(container, initialTab = 'general') {
           ${selectField('ProrateMidMonth', 'Prorata check-in/check-out tengah bulan', [['false', 'Tidak aktif'], ['true', 'Aktif']], editable)}
           ${selectField('LateFeeEnabled', 'Denda keterlambatan', [['false', 'Tidak aktif'], ['true', 'Aktif']], editable)}
           ${field('LateFeePercent', 'Persentase denda (%)', 'number', editable)}
+          ${selectField('BackupEnabled', 'Backup harian otomatis', [['true', 'Aktif'], ['false', 'Tidak aktif']], editable)}
           ${field('BillingPolicy', 'Kebijakan sewa', 'textarea', editable)}
         </div></div>
         <div class="card"><div class="card-head"><h3>Kebijakan pembayaran</h3></div><div class="card-body">
@@ -185,6 +187,7 @@ async function renderSettings(container, initialTab = 'general') {
           <div class="report-row"><span>Prorata</span><span>${setting('ProrateMidMonth') === 'true' ? 'Aktif' : 'Tidak aktif'}</span></div>
           <div class="report-row"><span>Denda keterlambatan</span><span>${setting('LateFeeEnabled') === 'true' ? `${setting('LateFeePercent')}%` : 'Tidak aktif'}</span></div>
           <div class="report-row"><span>Jatuh tempo</span><span>${UI.esc(setting('DefaultDueDays', '5'))} hari</span></div>
+          <div class="report-row"><span>Backup harian</span><span>${String(setting('BackupEnabled', 'true')).toLowerCase() === 'true' ? 'Aktif' : 'Tidak aktif'}</span></div>
         </div></div>
       </div>
       <div class="card mt-16"><div class="card-head"><h3>Log sistem</h3></div><div class="table-wrap"><table class="data"><thead><tr><th>Waktu</th><th>Level</th><th>Sumber</th><th>Pesan</th></tr></thead><tbody>

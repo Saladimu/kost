@@ -36,6 +36,9 @@ Cakupan:
 - setting `BackupEnabled` default `true`, auto-run backup ada di folder backups,
   dan menyetel `BackupEnabled=false` menghentikan backup baru tanpa mengganggu
   tagihan harian;
+- pembacaan `BackupEnabled` dari boolean Sheets (`FALSE`) maupun string
+  (`'false'`, `'FALSE'`), termasuk sel kosong yang memakai nilai bawaan, serta
+  verifikasi bahwa backup otomatis benar-benar dilewati saat bernilai `false`;
 
 Uji menggunakan basis data sementara melalui `DB_PATH` dan port acak sehingga data pengembangan tidak berubah.
 
